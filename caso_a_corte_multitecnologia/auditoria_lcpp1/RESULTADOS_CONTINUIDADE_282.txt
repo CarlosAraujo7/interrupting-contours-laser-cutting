@@ -1,0 +1,12 @@
+instancias: 282
+delta do CSV (fo_forte deles / fo_pcglns - 1): mediana -0.680%, media -0.647%, vitorias 282/282
+delta recomputado (FO listada): mediana -0.678%, media -0.638%, vitorias 278/282
+delta com SALTOS contados (limite inferior do custo real): mediana -0.345%, media -0.281%, vitorias 235/282
+correcao (pontos percentuais): mediana +0.361, max +0.869; saltos por instancia: mediana 29
+maiores correcoes: [('art_7_hole_sep', 0.0, 0.87), ('art_13_hole_sep', 0.04, 0.87), ('fu_sep', -0.51, 0.3), ('art_3_hole_sep', -0.26, 0.52), ('art_8_hole_sep', -0.17, 0.58)]
+
+instancias: 282
+LCPP-1 (CSV: forte listada x PCGLNS sem pernas da origem): mediana -0.680%, media -0.647%, vitorias da heuristica 282/282
+heuristica LISTADA x PCGLNS COM pernas da origem: mediana -0.825%, media -1.285%, vitorias da heuristica 282/282
+AMBOS HONESTOS (heuristica com saltos x PCGLNS com pernas): mediana -0.470%, media -0.930%, vitorias da heuristica 254/282
+instancias em que a heuristica perde mais (honesto): [('art_13_hole_sep', 0.73), ('art_7_hole_sep', 0.71), ('art_12_hole_sep', 0.54), ('art_8_hole_sep', 0.53), ('art_24_hole_sep', 0.52), ('art_4_hole_sep', 0.47)]

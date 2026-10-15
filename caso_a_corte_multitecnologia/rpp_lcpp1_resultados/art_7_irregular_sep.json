@@ -1,0 +1,1 @@
+{"instancia": "art_7_irregular_sep", "vertices": 105, "arestas": 104, "corte_comprimento": 1520.92848308, "resolvida": true, "limite_s": 900.0, "ar_otimo": 339.12673933, "rodadas": 18, "tempo_s": 410.0487787723541, "tentativa_anterior": {"resolvida": false, "tempo_s": 608.860034942627, "limite_s": 600.0}}

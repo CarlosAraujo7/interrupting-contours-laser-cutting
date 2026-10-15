@@ -1,0 +1,33 @@
+# LICENSES — o que está sob qual licença (rascunho, 03/10/2026)
+
+**Status:** rascunho preparado seguindo a recomendação D8 do plano 07, aceita por Carlos ("seguir com o recomendado"). **Não é assessoria jurídica** e nada foi publicado. Antes da publicação: preencher os titulares dos direitos, conferir cada item "a confirmar" e revisar o texto com os coautores.
+
+## 1. O nosso material
+
+| Material | Licença | Observação |
+|---|---|---|
+| **Código** (`caso_a_*`, `caso_b_*`, `caso_c_*`, `src_base/` só no que é nosso, scripts da raiz) | **Apache-2.0** — arquivo `LICENSE` (texto padrão da Apache; copiado do `LICENSE` do PCGLNS upstream, que é o mesmo texto) | Escolhida por coerência com o PCGLNS e pela concessão explícita de patentes. **Titular provisório (padrão comum em projetos de código aberto): `Copyright 2026 The LCPP-Generalizacao Authors`** — evita listar pessoas agora; trocar por nomes/instituições se alguma instituição (UECE, UFMG, Unifor…) reivindicar a propriedade intelectual pelo vínculo ou financiamento (isso só os autores sabem). Cabeçalho de licença nos arquivos fica para a publicação. |
+| **Dados que nós geramos:** grades sintéticas (`instancia_dalavi*`, `paridade*`, `extensao*`), resultados (`resultado_*`, `*.md`, `*.csv`), tours do LKH e do multi-ferramenta | **CC-BY-4.0** | Texto legal: https://creativecommons.org/licenses/by/4.0/legalcode (incluir o texto no repositório na publicação). As grades de Dalavi et al. reproduzem a *geometria descrita no artigo* (espaçamentos); citar a fonte. |
+| **Texto** (docs, log) | a decidir (CC-BY-4.0 é a sugestão) | O log cronológico é registro interno; decidir se vai ao repositório público. |
+
+## 2. Material de terceiros — NÃO está coberto pela licença acima
+
+| Item | Licença / situação | O que fazer |
+|---|---|---|
+| **LKH-3** (`ferramentas/LKH-3.0.14.tgz`, binário no WSL) | README: "distributed for research use. The author reserves all rights" — **não é código aberto** | **NÃO redistribuir o `.tgz`/fonte em repositório público.** Apontar a URL do autor + SHA-256 (em `ferramentas/LEIA-ME.md`) e citar Helsgaun (2000, 2009, 2017). Decisão de Carlos (03/10/2026): manter como ferramenta de pesquisa. |
+| **PCGLNS** (`ferramentas/PCGLNS_upstream/`) | Apache-2.0 (upstream `AndreiKud/PCGLNS`, commit `bc09d9d`) | Pode ser redistribuído mantendo o `LICENSE` e os avisos: GLNS — Smith & Imeson (2017); extensão — Khachay, Kudriavtsev & Petunin (2020). |
+| **Placas reais** (`instances/*.json` e `gerber_reais/`) | cada JSON traz o campo `licenca`: **pocketbeagle** CC-BY-4.0; **esp_rust_board** CERN-OHL v2 Permissive; **speeduino_dropbear** CERN-OHL-S v2 (*recíproca*); **beagleboard_xm** CC BY-SA (versão a confirmar; sem LICENSE explícito no repositório de origem) | Manter a licença e a atribuição originais em qualquer redistribuição. As duas *recíprocas* (CERN-OHL-S, CC BY-SA) impõem a mesma licença a obras derivadas — **a confirmar** se as coordenadas/diâmetros extraídos contam como derivados; na dúvida, não redistribuir os JSONs dessas duas e publicar apenas o script de extração e a URL. |
+| **Instâncias de furação da TSPLIB** (`instances/tsplib/*.tsp.gz`, Reinelt) | acesso público; **termos exatos de redistribuição a confirmar** | Preferir apontar a URL oficial (`comopt.ifi.uni-heidelberg.de/software/TSPLIB95/`) a redistribuir os arquivos. |
+| **EnsignDaniels/CPP** (`instances/ensigndaniels_cpp/`) | o repositório de origem **não tem LICENSE** | Não redistribuir; apontar o repositório e o commit `e0dca03`. |
+| **CPPLib** (`instances/cpplib/`, `Library-CCP.zip`, Petunin et al.) | distribuída no Google Drive dos autores; **licença não declarada** | Não redistribuir; apontar a fonte (ver `instances/cpplib/README.md`). |
+| **NIST Additive Manufacturing Test Artifact** (`caso_b_manufatura_aditiva/instances/reais/NIST-Test-Artifact-stl.zip`, `nist_am_test_artifact.stl`) | **domínio público** (NIST: arquivos "não sujeitos a direitos autorais"); o NIST pede reconhecimento | Pode ser redistribuído; creditar o NIST e citar Moylan et al. (conferir referência no PDF da página do NIST). |
+| **Modelos do Thingi10K** (`instances/reais/thingi_*.stl`; origem: Hugging Face `Thingi10K/Thingi10K`; modelos originais do Thingiverse) | **licença por modelo** (os 5 usados são CC-BY; o repositório do dataset é Apache-2.0) | **NÃO redistribuir as STL**; publicar só IDs e o script de seleção; creditar título/autor/fonte/licença (`instances/reais/ATRIBUICOES.md`) em qualquer texto ou figura que as mostre; indicar a modificação (conversão e translação). |
+| **Metadados do Thingi10K** (`instances/reais/thingi10k_metadata/*.csv`) | repositório Apache-2.0; campo `License` por modelo | Não precisam ser redistribuídos (baixáveis da fonte); guardar os hashes. |
+| **PCGTSPLIB — instâncias de Ekstedt & Salman** (`ferramentas/PCGTSPLIB_ukoloff/`; baixadas em 10/10/2026 de `github.com/ukoloff/PCGTSP-BnB`, pastas `Salman/input` e `Salman/heuristic`; 32 instâncias, ~14 MB) | o repositório **não declara licença** (API: `license: null`); as instâncias são de Ekstedt & Salman (Salman et al., 2020) | **Não redistribuir** (fora do pacote de replicação); só auditoria local do PCGLNS; citar a fonte e o acesso (`ferramentas/PCGTSPLIB_ukoloff/FONTE.md`). |
+| **Artigos em PDF** (`../Artigos/`) | direitos das editoras | **Nunca** incluir no repositório. |
+| **Bibliotecas** (numpy, scipy, pandas, matplotlib, networkx, shapely, scikit-learn, ezdxf, trimesh, Julia) | licenças livres (BSD/MIT) | Não são redistribuídas; listadas em `requirements.txt`. |
+| **PrusaSlicer 2.9.6** (fora do projeto, `C:\Users\vinic\ferramentas_externas\`) | **AGPL-3.0** (software livre, copyleft forte; fonte aberto em `github.com/prusa3d/PrusaSlicer`) | Usado **só como programa externo de linha de comando** (gera os G-codes de referência); nada dele é incorporado ao nosso código, **não é redistribuído**, e os G-codes que ele gera não herdam a licença. Citar versão e hash (em `ferramentas/LEIA-ME.md`) e o projeto (Prusa Research; o `--help` informa "based on Slic3r"); a forma exata de citação acadêmica a confirmar no repositório deles. Se um dia algum arquivo dele (perfil, binário) for redistribuído, a AGPL passa a valer para essa parte. |
+
+## 3. Regra de bolso para o repositório público (Data/Code Availability)
+
+Incluir: código nosso + `LICENSE`; dados que nós geramos; scripts que *baixam/extraem* os dados de terceiros a partir da fonte original; `requirements.txt`, `ENVIRONMENT.md`, `reproduzir_smoke.py`. **Excluir:** `ferramentas/LKH-3.0.14.tgz`, os PDFs, o CPPLib, o EnsignDaniels/CPP e (a confirmar) as placas com licença recíproca.

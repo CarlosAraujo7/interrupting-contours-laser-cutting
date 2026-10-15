@@ -1,0 +1,1 @@
+{"instancia": "dighe1_mod_sep", "vertices": 85, "arestas": 84, "corte_comprimento": 1665.6502009, "resolvida": true, "limite_s": 900.0, "ar_otimo": 338.93552264000004, "rodadas": 30, "tempo_s": 637.1416330337524, "tentativa_anterior": {"resolvida": false, "tempo_s": 603.2902939319611, "limite_s": 600.0}}

@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software or data, please cite the article (when published) and this repository."
+title: "interrupting-contours-laser-cutting: code, protocols and results for 'What does interrupting contours buy?'"
+type: software
+license: Apache-2.0
+authors:
+  - family-names: "Amaro Junior"
+    given-names: "Bonfim"
+    affiliation: "Universidade Estadual do Ceará (UECE)"
+  - family-names: "Costa Santos"
+    given-names: "Marcio"
+    affiliation: "Universidade Federal de Minas Gerais (UFMG)"
+  - family-names: "Nepomuceno de Carvalho"
+    given-names: "Guilherme"
+    affiliation: "Universidade Estadual do Ceará (UECE)"
+  - family-names: "Pinheiro"
+    given-names: "Plácido Rogério"
+    affiliation: "Universidade de Fortaleza (UNIFOR)"
+  - family-names: "Dantas Araújo"
+    given-names: "Carlos Vinicio"
+    affiliation: "Universidade Estadual do Ceará (UECE)"
+repository-code: "https://github.com/CarlosAraujo7/interrupting-contours-laser-cutting"

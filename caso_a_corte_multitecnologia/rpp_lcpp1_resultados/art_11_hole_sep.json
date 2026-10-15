@@ -1,0 +1,1 @@
+{"instancia": "art_11_hole_sep", "vertices": 77, "arestas": 77, "corte_comprimento": 1413.9795184, "resolvida": true, "limite_s": 900.0, "ar_otimo": 412.3808167899999, "rodadas": 37, "tempo_s": 673.8910512924194, "tentativa_anterior": {"resolvida": false, "tempo_s": 600.4126498699188, "limite_s": 600.0}}

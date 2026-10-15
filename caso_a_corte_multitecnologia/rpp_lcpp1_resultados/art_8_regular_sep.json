@@ -1,0 +1,1 @@
+{"instancia": "art_8_regular_sep", "vertices": 92, "arestas": 91, "corte_comprimento": 1452.94539585, "resolvida": true, "limite_s": 900.0, "ar_otimo": 255.11677454000005, "rodadas": 30, "tempo_s": 747.1641001701355, "tentativa_anterior": {"resolvida": false, "tempo_s": 600.0923593044281, "limite_s": 600.0}}

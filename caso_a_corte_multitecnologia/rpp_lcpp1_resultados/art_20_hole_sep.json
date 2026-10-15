@@ -1,0 +1,1 @@
+{"instancia": "art_20_hole_sep", "vertices": 100, "arestas": 99, "corte_comprimento": 1458.6727998200001, "resolvida": true, "limite_s": 900.0, "ar_otimo": 469.04725614000006, "rodadas": 19, "tempo_s": 611.8886404037476, "tentativa_anterior": {"resolvida": false, "tempo_s": 651.221310377121, "limite_s": 600.0}}

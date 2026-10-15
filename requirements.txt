@@ -1,0 +1,16 @@
+# Ambiente de referencia (WP0.2, 02/10/2026) -- versoes INSTALADAS no dispositivo de desenvolvimento.
+# Python 3.12.10 (Windows 11, AMD64). Instalar com: pip install -r requirements.txt
+numpy==2.5.2
+scipy==1.18.0
+pandas==3.0.5
+matplotlib==3.11.1
+networkx==3.6.1
+shapely==2.1.2
+scikit-learn==1.9.0
+ezdxf==1.4.4   # instalado em 03/10/2026 com autorizacao de Carlos (Caso A: dxf_parser.py); depende de fonttools, pyparsing, typing_extensions
+
+trimesh==5.1.1   # instalado em 06/10/2026 com autorizacao de Carlos (Caso B: leitura de STL e secoes 2D); licenca MIT; depende so de numpy
+#
+# Ferramentas fora do pip (ver ENVIRONMENT.md e ferramentas/LEIA-ME.md):
+#   Julia 1.12.7 (PCGLNS, rodar com --threads=1,0); WSL2 Ubuntu + gcc 15.2.0 (compila o LKH-3.0.14)
+#   PrusaSlicer 2.9.6 (portatil, fora do OneDrive: C:\Users\vinic\ferramentas_externas\; Caso B, fatiamento por linha de comando)

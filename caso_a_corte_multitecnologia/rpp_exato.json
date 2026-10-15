@@ -1,0 +1,86 @@
+{
+ "p1xe_7": {
+  "vertices": 20,
+  "n_pecas": 5,
+  "resolvida": true,
+  "ar_otimo": 235.0,
+  "rodadas": 5,
+  "tempo_s": 0.06154298782348633,
+  "ar_tsh": 250.0,
+  "ar_heur_orig": 125.0,
+  "ar_heur_pi": 1695.0
+ },
+ "p1xe_6": {
+  "vertices": 32,
+  "n_pecas": 6,
+  "resolvida": true,
+  "ar_otimo": 118.92721558,
+  "rodadas": 8,
+  "tempo_s": 1.0249357223510742,
+  "ar_tsh": 118.92721558,
+  "ar_heur_orig": 60.0,
+  "ar_heur_pi": 2100.0
+ },
+ "p5xe_1": {
+  "vertices": 64,
+  "n_pecas": 9,
+  "resolvida": true,
+  "ar_otimo": 643.3536682199999,
+  "rodadas": 15,
+  "tempo_s": 52.62856459617615,
+  "ar_tsh": 643.3536682199999,
+  "ar_heur_orig": 398.95375061035156,
+  "ar_heur_pi": 2156.0692596435547
+ },
+ "p5xj_4": {
+  "vertices": 56,
+  "n_pecas": 14,
+  "resolvida": true,
+  "ar_otimo": 1501.6311192599997,
+  "rodadas": 16,
+  "tempo_s": 60.36141538619995,
+  "ar_tsh": 1501.6311192599997,
+  "ar_heur_orig": 863.2400095503747,
+  "ar_heur_pi": 5258.092524813059
+ },
+ "p3xe_2": {
+  "vertices": 68,
+  "resolvida": false
+ },
+ "p1xe_1": {
+  "vertices": 112,
+  "resolvida": false
+ },
+ "p1xe_8": {
+  "vertices": 64,
+  "resolvida": false
+ },
+ "p1xe_2": {
+  "vertices": 98,
+  "resolvida": false
+ },
+ "p1xe_4": {
+  "vertices": 111,
+  "resolvida": false
+ },
+ "p1xe_5": {
+  "vertices": 122,
+  "resolvida": false
+ },
+ "p3xe_1": {
+  "vertices": 98,
+  "resolvida": false
+ },
+ "p1xe_3": {
+  "vertices": 117,
+  "resolvida": false
+ },
+ "p1xj_8": {
+  "vertices": 118,
+  "resolvida": false
+ },
+ "p3xj_5": {
+  "vertices": 128,
+  "resolvida": false
+ }
+}

@@ -1,0 +1,25 @@
+{
+ "inicio": "2026-10-13 12:19:45",
+ "protocolo": "docs/19_protocolo_V3_reinicio.md",
+ "forcado": false,
+ "problemas_ignorados": [],
+ "maquina": "Windows-11-10.0.26300-SP0",
+ "python": "3.12.10",
+ "julia": "julia version 1.12.7",
+ "cpu": "12th Gen Intel(R) Core(TM) i5-12450H",
+ "threads": 12,
+ "memoria_disponivel_gb": 5.9,
+ "bateria": "79|2",
+ "processos_pesados_na_partida": [],
+ "sha256": {
+  "rodar_v3.py": "602a69d2d6fe9f0687b176d7a0fa174619ba56a4dfe448521af8ccba9ef031db",
+  "segmento_gtsp.py": "c05afffa48356ac107ac204cd51dc5f577422d9301a99085aaf10ea2150201c3",
+  "caminho_honesto.py": "e2469fb46368e7307e92f42a2892a682f93d417e7368ed8ef0a68a9c69782067",
+  "instancias_lcpp1.py": "daf7fb2d6d3ed586d0a88e775effccd328727e09d7dd9c146cf241f643311526",
+  "tsh_segmento.py": "3ce73694f51712812de6cb0f0235fd89fdeadc4817fcc6fda3814f5b3471c246",
+  "avaliar_heuristica_formal.py": "46863612de5d3ca9331341d89616bb1a2522926f5866b4bffc11ce91f71d2ba3",
+  "..\\src_base\\heuristic_core.py": "f829b721aadc1571981ba9b336f43c515406892a77d4bb43fdc40b3cd61fbc58"
+ },
+ "pcglns": "ferramentas/PCGLNS_upstream (commit bc09d9d)",
+ "parametros": "rodar --workers 3 --ts 0.25,1.0 --rodadas 2"
+}
