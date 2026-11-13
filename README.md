@@ -2,7 +2,7 @@
 
 https://github.com/CarlosAraujo7/interrupting-contours-laser-cutting
 
-Code, protocols and results for the manuscript **"What does interrupting contours buy? Optimality gaps, cost conventions, restart costs and air-move times in segment-level laser cutting path planning"**
+Code, protocols and results for the manuscript **"Interrupting contours in segment-level laser cutting path planning: exact optima, cost conventions, restart costs and air-move times"**
 (Amaro Junior, Costa Santos, Nepomuceno de Carvalho, Pinheiro, Dantas Araújo), prepared for *Computers & Operations Research* [status: in preparation; update on submission]. The repository holds everything needed to
 recompute every number, table and figure of the paper from the stored results, the pre-specified protocols with their dates and code hashes, and the scripts that regenerate the results; it does **not** hold third-party
 instances or the heuristic of the companion manuscript (see "What is NOT here").
@@ -26,7 +26,7 @@ coordinates of solution paths were removed from `v3_resultados/*.json` (they rep
   exact rural-postman optimum (`rpp_exato.py`, `rpp_lcpp1.py`), runners and analysis scripts of each protocol, the restart-aware repair (`reparo_reinicio.py`), the independent reader of the synthetic instances
   (`instancias_lcpp1.py`), the re-optimisation for non-linear air-move times (`reotimizar_tau.py`, `reotimizar_tau_reinicio.py`), the map of regimes (`analise_mapa_regimes.py`), the exact optima on CPPLib (`rpp_cpplib.py`), the open
   slits (`fendas_segmento.py`), the certified bounds and the exact contour-level optimum (`teto_certificado.py`, independently checked by an exact restart-aware MILP in `verificar_certificado_milp.py`; exploratory, computed after the main results and not pre-specified; report
-  `RESULTADOS_TETO_CERTIFICADO.md`), the bibliographic check against Crossref (`manuscrito/verificar_referencias_n1.py`, report in `manuscrito/N1/submissao/`), `manuscrito/gerar_tabelas_n1.py`, which produces every table and result number of the manuscript from the result files, and `manuscrito/gerar_figuras_n1.py`, which produces its four
+  `RESULTADOS_TETO_CERTIFICADO.md`), the bibliographic check against Crossref (`manuscrito/verificar_referencias_n1.py`, report in `manuscrito/N1/submissao/`), `manuscrito/gerar_tabelas_n1.py`, which produces every table and result number of the manuscript from the result files, and `manuscrito/gerar_figuras_n1.py`, which produces its five
   figures (Figure 1 is a toy layout of our own, solved exactly by the script).
 - **Results per task** (JSON) and **reports** (`RESULTADOS_*.md`): `lcpp1_segmento_resultados/`, `v3_resultados/`, `estrita_resultados/`, `reparo_resultados/`, `escala_resultados/`, `rpp_lcpp1_resultados/`,
   `segmento_resultados/`, `v2_resultados/`, `tau_resultados/`, `tau_reinicio_resultados/`, `rpp_cpplib_resultados/`, `fendas_resultados/`, `teto_resultados/`, `milp_certificado_resultados/`, `auditoria_lcpp1/{honesta_282,continuidade_282_dp,pecas_robustez}/`.

@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software or data, please cite the article (when published) and this repository."
-title: "interrupting-contours-laser-cutting: code, protocols and results for 'What does interrupting contours buy?'"
+title: "interrupting-contours-laser-cutting: code, protocols and results for 'Interrupting contours in segment-level laser cutting path planning'"
 type: software
 license: Apache-2.0
 authors:

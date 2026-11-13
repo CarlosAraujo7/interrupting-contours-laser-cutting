@@ -1,24 +1,20 @@
-"""
-gerar_figuras_n1.py  --  figuras do manuscrito N1 (nada digitado a mao: tudo sai dos arquivos de resultado; a Figura 1 e um layout de brinquedo nosso, resolvido por DP exato)
+r"""
+gerar_figuras_n1.py  --  figuras do manuscrito N1 EM TikZ/pgfplots (nada digitado a mao: tudo sai dos arquivos de resultado; a Figura 1 e um layout de brinquedo nosso, resolvido por DP exato)
 ==========================================================================================================================================================================
-Fig. 1 (fig_n1_brinquedo.pdf)   layout de brinquedo (3 retangulos), rota de contornos x rota de segmentos (ambas otimas por enumeracao/DP) e o ponto de equilibrio t* do reinicio
-Fig. 2 (fig_n1_convencoes.pdf)  distribuicao, por categoria, da diferenca heuristica x PCGLNS por contorno nas convencoes executavel e formal (282 instancias sinteticas)
-Fig. 3 (fig_n1_reinicio.pdf)    (a) fracao das instancias em que a rota segue melhor que a de contorno em funcao de t; (b) mediana de T/T_P - 1 contra t, rota cega, reparada e ciente do reinicio
-Fig. 5 (fig_n1_espessura.pdf)   (a) curva EXATA da economia maxima de qualquer plano em funcao de t (MILP); (b) faixas do custo de reinicio por espessura (literatura; retomada derivada)
-Fig. 4 (fig_n1_voo.pdf)         (a) tempo de um movimento de voo tau(d) nos modelos usados; (b) vantagem do nivel de segmento reotimizado (todas / mesmo corte / arestas compartilhadas)
-Uso: python gerar_figuras_n1.py        (saida em manuscrito/N1/figuras/)
+Saida: manuscrito/N1/figuras/fig_n1_*.tex  (fragmentos para \input dentro de \begin{figure}; estilo comum em figuras/n1_estilo_figuras.tex) e N1/numeros_figuras.tex
+Fig. 1 (fig_n1_brinquedo)   layout de brinquedo (3 retangulos), rota de contornos x rota de segmentos (ambas otimas por enumeracao/DP) e o ponto de equilibrio t* do reinicio
+Fig. 2 (fig_n1_convencoes)  distribuicao, por categoria, da diferenca heuristica x PCGLNS por contorno nas convencoes executavel e formal (282 instancias sinteticas)
+Fig. 3 (fig_n1_reinicio)    (a) fracao das instancias em que a rota segue melhor que a de contorno em funcao de t; (b) rota cega, (c) rotas cientes do reinicio (mediana de T/T_P - 1 contra t)
+Fig. 4 (fig_n1_espessura)   (a) curva EXATA da economia maxima de qualquer plano em funcao de t (MILP); (b) faixas do custo de reinicio por espessura (literatura; retomada derivada)
+Fig. 5 (fig_n1_voo)         (a) tempo de um movimento de voo tau(d) nos modelos usados; (b) vantagem do nivel de segmento reotimizado (todas / mesmo corte / arestas compartilhadas)
+Uso: python gerar_figuras_n1.py
 """
 import itertools
 import json
 import os
-import re
 import sys
 
 import numpy as np
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt                                         # noqa: E402
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
@@ -34,11 +30,20 @@ import rodar_v3 as rv                                                   # noqa: 
 
 OUT = os.path.join(AQUI, "N1", "figuras")
 os.makedirs(OUT, exist_ok=True)
-plt.rcParams.update({"font.family": "serif", "font.serif": ["STIXGeneral", "Times New Roman", "DejaVu Serif"], "mathtext.fontset": "stix", "font.size": 8.5, "axes.titlesize": 9,
-                     "axes.labelsize": 8.5, "legend.fontsize": 7.5, "xtick.labelsize": 8, "ytick.labelsize": 8, "axes.spines.top": False, "axes.spines.right": False,
-                     "pdf.fonttype": 42, "axes.grid": True, "grid.alpha": 0.25, "grid.linewidth": 0.5})
-C_BLUE, C_ORANGE, C_GREEN, C_RED, C_GREY, C_PURPLE = "#0072B2", "#E69F00", "#009E73", "#D55E00", "#555555", "#7B3294"
 VCUT, VAIR = 100.0 / 6.0, 400.0
+
+
+def g(x):
+    return f"{x:.5g}"
+
+
+def cs(xs, ys):
+    return " ".join(f"({g(x)},{g(y)})" for x, y in zip(xs, ys))
+
+
+def escrever(nome, texto):
+    with open(os.path.join(OUT, nome + ".tex"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(texto)
 
 
 # ---------------------------------------------------------------------------------------------------------------- Fig. 1: layout de brinquedo
@@ -107,36 +112,6 @@ def segmento_exato(polis, O, t):
     return ar, T, seq, S, runs
 
 
-def desenhar_rota(ax, polis, O, passos, titulo, cor_corte="#222222"):
-    """passos: lista de ('c', p, q) cortes e ('a', p, q) movimentos de ar, em ordem; numera as corridas."""
-    for P in polis:
-        xs, ys = [p[0] for p in P] + [P[0][0]], [p[1] for p in P] + [P[0][1]]
-        ax.fill(xs, ys, color="#eeeeee", zorder=0)
-        ax.plot(xs, ys, color="#bbbbbb", lw=0.6, zorder=1)
-    corrida = 0
-    ant = None
-    for tipo, p, q in passos:
-        if tipo == "a":
-            ax.annotate("", xy=q, xytext=p, arrowprops=dict(arrowstyle="-|>", color=C_RED, lw=1.0, ls=(0, (3, 2)), shrinkA=0, shrinkB=0, mutation_scale=7), zorder=3)
-        else:
-            if ant != "c":
-                corrida += 1
-                ax.text(p[0], p[1], str(corrida), fontsize=7, color="white", ha="center", va="center", zorder=6, bbox=dict(boxstyle="circle,pad=0.18", fc=C_BLUE, ec="none"))
-            ax.annotate("", xy=q, xytext=p, arrowprops=dict(arrowstyle="-|>", color=cor_corte, lw=1.5, shrinkA=0, shrinkB=0, mutation_scale=7), zorder=4)
-        ant = tipo
-    ax.plot(*O, marker="s", color="black", ms=5, zorder=7)
-    ax.text(O[0] + 1.2, O[1] - 2.8, "O", fontsize=8)
-    ax.set_title(titulo, loc="left")
-    ax.set_aspect("equal")
-    ax.set_xlim(-2, 33)
-    ax.set_ylim(-4, 28)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.grid(False)
-    for s in ax.spines.values():
-        s.set_visible(False)
-
-
 def passos_contorno(polis, O, rota):
     out, pos = [], O
     for ci, e in rota:
@@ -164,6 +139,35 @@ def passos_segmento(S, O, seq):
     return out
 
 
+ESTILOS_TOY = (r"x=0.17cm,y=0.17cm,"
+               r"cut/.style={line width=1.3pt,black,postaction={decorate},decoration={markings,mark=at position 0.5 with {\arrow{Stealth[length=2.0mm,width=1.6mm]}}}},"
+               r"air/.style={line width=0.8pt,fgM,densely dashed,-{Stealth[length=1.6mm,width=1.3mm]},shorten >=1.3mm},"
+               r"disc/.style={circle,fill=black,inner sep=0pt,minimum size=2.6mm}")
+
+
+def tikz_rota(polis, O, passos, titulo, linha2):
+    L = [r"\begin{tikzpicture}[" + ESTILOS_TOY + "]"]
+    for P in polis:
+        cam = " -- ".join(f"({g(x)},{g(y)})" for x, y in P) + " -- cycle"
+        L.append(r"\fill[fgXL] " + cam + ";")
+        L.append(r"\draw[fgL,line width=0.5pt] " + cam + ";")
+    ant = None
+    inicios = []
+    for tipo, p, q in passos:
+        estilo = "air" if tipo == "a" else "cut"
+        L.append(r"\draw[" + estilo + "] " + f"({g(p[0])},{g(p[1])}) -- ({g(q[0])},{g(q[1])});")
+        if tipo == "c" and ant != "c":
+            inicios.append(p)
+        ant = tipo
+    for p in inicios:
+        L.append(r"\node[disc] at " + f"({g(p[0])},{g(p[1])}) {{}};")
+    L.append(r"\node[draw,fill=black,minimum size=2.2mm,inner sep=0pt] at (0,0) {};")
+    L.append(r"\node[anchor=north west,font=\footnotesize,inner sep=1pt] at (0.8,-0.6) {$O$};")
+    L.append(r"\node[anchor=south west,align=left,font=\footnotesize,inner sep=0pt] at (-1,28.8) {\textbf{" + titulo + r"}\\" + linha2 + "};")
+    L.append(r"\end{tikzpicture}")
+    return "\n".join(L)
+
+
 def fig_brinquedo():
     O = (0.0, 0.0)
     polis = [rect(5, 8, 10, 10), rect(20, 4, 10, 8), rect(18, 17, 10, 8)]
@@ -171,26 +175,31 @@ def fig_brinquedo():
     s0 = segmento_exato(polis, O, 0.0)
     ar_c, ar_s, R_c, R_s = c0[0], s0[0], len(polis), s0[4]
     tstar = (ar_c - ar_s) / VAIR / (R_s - R_c)
-    fig = plt.figure(figsize=(6.8, 3.0))
-    gs = fig.add_gridspec(1, 3, width_ratios=[1, 1, 1.15], wspace=0.28)
-    a1, a2, a3 = fig.add_subplot(gs[0]), fig.add_subplot(gs[1]), fig.add_subplot(gs[2])
-    desenhar_rota(a1, polis, O, passos_contorno(polis, O, c0[2]), f"(a) Contour level\n{R_c} runs, air {ar_c:.0f} units")
-    desenhar_rota(a2, polis, O, passos_segmento(s0[3], O, s0[2]), f"(b) Segment level, $t=0$\n{R_s} runs, air {ar_s:.0f} units")
-    ts = np.linspace(0, 0.07, 100)
-    Tc = (ar_c / VAIR) + R_c * ts
-    Ts = (ar_s / VAIR) + R_s * ts
-    dif = (Ts - Tc) * 1000.0
-    a3.plot(ts, dif, color=C_BLUE, lw=1.6)
-    a3.axhline(0, color=C_GREY, lw=0.8)
-    a3.axvline(tstar, color=C_RED, lw=0.9, ls="--")
-    a3.text(tstar + 0.002, dif.max() * 0.85, f"$t^\\ast={tstar:.4f}$ s", color=C_RED, fontsize=7.5, va="top")
-    a3.set_xlabel("restart cost $t$ (s per run)")
-    a3.set_ylabel("route (b) $-$ route (a), total time (ms)")
-    a3.set_title("(c) Which route is faster\n", loc="left")
-    a3.text(0.068, dif.min() * 0.55, "(b) faster", fontsize=7.5, color=C_GREY, ha="right", va="center")
-    a3.text(0.004, dif.max() * 0.45, "(a) faster", fontsize=7.5, color=C_GREY, ha="left", va="center")
-    fig.savefig(os.path.join(OUT, "fig_n1_brinquedo.pdf"), bbox_inches="tight")
-    plt.close(fig)
+    ta = tikz_rota(polis, O, passos_contorno(polis, O, c0[2]), "(a) Contour level", f"{R_c} runs, air moves {ar_c:.0f} units")
+    tb = tikz_rota(polis, O, passos_segmento(s0[3], O, s0[2]), "(b) Segment level", f"{R_s} runs, air moves {ar_s:.0f} units")
+    ts = np.linspace(0, 0.07, 36)
+    dif = ((ar_s / VAIR + R_s * ts) - (ar_c / VAIR + R_c * ts)) * 1000.0
+    ymax, ymin = float(dif.max()), float(dif.min())
+    y0, y1 = ymin * 1.15, ymax * 1.15
+    tc = (r"\begin{tikzpicture}" "\n" r"\begin{axis}[n1axis,width=0.6\textwidth,height=4.4cm,xmin=0,xmax=0.07,ymin=" + g(y0) + ",ymax=" + g(y1) +
+          r",xlabel={restart cost $t$ (s per run)},ylabel={time of (b) $-$ time of (a) (ms)},title={(c) Which route is faster?},"
+          r"title style={at={(0,1)},anchor=south west,yshift=0.1cm},xtick={0,0.02,0.04,0.06},scaled x ticks=false,xticklabel style={/pgf/number format/fixed}]" "\n"
+          r"\addplot[black,line width=1.2pt] coordinates {" + cs(ts, dif) + "};\n"
+          r"\draw[black,line width=0.5pt] (axis cs:0,0) -- (axis cs:0.07,0);" "\n"
+          r"\draw[fgD,dashed,line width=0.7pt] (axis cs:" + g(tstar) + "," + g(y0) + r") -- (axis cs:" + g(tstar) + "," + g(y1) + ");\n"
+          r"\node[anchor=north west,align=left,font=\scriptsize] at (axis cs:" + g(tstar + 0.003) + ",-6) {$t^\\ast=" + f"{tstar:.4f}" + r"$\,s};" "\n"
+          r"\node[anchor=north west,align=left,font=\scriptsize,text=fgD] at (axis cs:0.002," + g(y1 * 0.93) + r") {above 0: (a) is faster};" "\n"
+          r"\node[anchor=south east,align=right,font=\scriptsize,text=fgD] at (axis cs:0.0685," + g(y0 * 0.93) + r") {below 0: (b) is faster};" "\n"
+          r"\end{axis}" "\n" r"\end{tikzpicture}")
+    leg = (r"\begin{tikzpicture}[x=1cm,y=1cm,font=\scriptsize]" "\n"
+           r"\draw[line width=1.3pt,black,-{Stealth[length=2.0mm,width=1.6mm]}] (0,0) -- (0.9,0); \node[anchor=west] at (1.05,0) {cut move (laser on)};" "\n"
+           r"\draw[line width=0.8pt,fgM,densely dashed,-{Stealth[length=1.6mm,width=1.3mm]}] (4.3,0) -- (5.2,0); \node[anchor=west] at (5.35,0) {air move (laser off)};" "\n"
+           r"\node[circle,fill=black,inner sep=0pt,minimum size=2.6mm] at (8.9,0) {}; \node[anchor=west] at (9.15,0) {start of a run (a restart)};" "\n"
+           r"\node[draw,fill=black,minimum size=2.2mm,inner sep=0pt] at (13.2,0) {}; \node[anchor=west] at (13.45,0) {origin $O$};" "\n"
+           r"\end{tikzpicture}")
+    texto = (r"\centering" "\n" r"\begin{minipage}[b]{0.47\textwidth}\centering" "\n" + ta + "\n" r"\end{minipage}\hfill" "\n"
+             r"\begin{minipage}[b]{0.47\textwidth}\centering" "\n" + tb + "\n" r"\end{minipage}" "\n\n" r"\vspace{8pt}" "\n" + leg + "\n\n" r"\vspace{14pt}" "\n" + tc + "\n")
+    escrever("fig_n1_brinquedo", texto)
     return {"toyAirC": f"{ar_c:.0f}", "toyAirS": f"{ar_s:.0f}", "toyAirSave": f"{ar_c - ar_s:.0f}", "toyRunsC": str(R_c), "toyRunsS": str(R_s), "toyTstar": f"{tstar:.4f}"}
 
 
@@ -205,83 +214,88 @@ def categoria(n):
     return "ESICUP-derived"
 
 
+def resumo5(d):
+    d = np.asarray(d, float)
+    q1, med, q3 = np.percentile(d, [25, 50, 75])
+    iqr = q3 - q1
+    return min(x for x in d if x >= q1 - 1.5 * iqr), q1, med, q3, max(x for x in d if x <= q3 + 1.5 * iqr)
+
+
 def fig_convencoes(L):
     cats = ["regular", "irregular", "with holes", "ESICUP-derived"]
-    fig, axs = plt.subplots(1, 2, figsize=(6.6, 2.7), sharey=True)
-    for ax, (chave, nome) in zip(axs, (("poli", "Executable path"), ("H0.0", "Formal objective"))):
+    rng = np.random.default_rng(7)
+    partes = []
+    for k, (chave, nome) in enumerate((("poli", "(a) Executable-path cost"), ("H0.0", "(b) Formal cost"))):
         dados = [[gt.pct(x[chave], x["peca"]) for x in L if categoria(x["nome"]) == c] for c in cats]
-        bp = ax.boxplot(dados, vert=False, widths=0.55, showfliers=False, patch_artist=True, medianprops=dict(color="black", lw=1.2), boxprops=dict(fc="#cfe3f1", ec=C_BLUE),
-                        whiskerprops=dict(color=C_BLUE), capprops=dict(color=C_BLUE))
-        rng = np.random.default_rng(7)
+        pos = r"at={(A.east)},anchor=west,xshift=0.35cm,yticklabels={}," if k else ""
+        nm = "name=B," if k else "name=A,"
+        yl = "" if k else r"yticklabels={regular,irregular,with holes,ESICUP-derived},"
+        s = [r"\begin{axis}[n1axis," + nm + pos + yl + r"width=0.43\textwidth,height=5.4cm,xmin=-6.5,xmax=5.6,ymin=0.05,ymax=4.6,y dir=reverse,ytick={1,2,3,4},ymajorgrids=false,xmajorgrids=false,"
+             r"xlabel={difference in total time (\%)},title={" + nome + r"},title style={at={(0,1)},anchor=south west,yshift=0.05cm}]"]
         for i, d in enumerate(dados, 1):
-            ax.scatter(d, i + rng.uniform(-0.18, 0.18, len(d)), s=3, color=C_GREY, alpha=0.45, lw=0, zorder=3)
-            ax.text(0.99, i, f"{sum(1 for v in d if v < 0)}/{len(d)}", transform=ax.get_yaxis_transform(), ha="right", va="center", fontsize=7, color=C_RED)
-        ax.axvline(0, color=C_RED, lw=0.9, ls="--")
-        ax.set_yticks(range(1, len(cats) + 1))
-        ax.set_yticklabels(cats)
-        ax.set_xlabel("heuristic vs contour-level PCGLNS, total time (%)")
-        ax.set_title(nome, loc="left")
-        ax.set_xlim(-6.5, 3.2)
-    axs[0].invert_yaxis()
-    fig.tight_layout()
-    fig.savefig(os.path.join(OUT, "fig_n1_convencoes.pdf"), bbox_inches="tight")
-    plt.close(fig)
+            xs = list(d)
+            ys = list(i + rng.uniform(-0.17, 0.17, len(d)))
+            s.append(r"\addplot[only marks,mark=*,mark size=0.5pt,fgM,opacity=0.6] coordinates {" + cs(xs, ys) + "};")
+        for i, d in enumerate(dados, 1):
+            lo, q1, med, q3, hi = resumo5(d)
+            s.append(r"\draw[black,line width=0.7pt] " + f"(axis cs:{g(lo)},{i}) -- (axis cs:{g(q1)},{i}) (axis cs:{g(q3)},{i}) -- (axis cs:{g(hi)},{i}) "
+                     f"(axis cs:{g(lo)},{i - 0.12}) -- (axis cs:{g(lo)},{i + 0.12}) (axis cs:{g(hi)},{i - 0.12}) -- (axis cs:{g(hi)},{i + 0.12});")
+            s.append(r"\draw[black,line width=0.7pt] " + f"(axis cs:{g(q1)},{i - 0.27}) rectangle (axis cs:{g(q3)},{i + 0.27});")
+            s.append(r"\draw[black,line width=1.4pt] " + f"(axis cs:{g(med)},{i - 0.27}) -- (axis cs:{g(med)},{i + 0.27});")
+            s.append(r"\node[anchor=east,font=\scriptsize,inner sep=1pt] at " + f"(axis cs:5.45,{i}) {{{sum(1 for v in d if v < 0)}/{len(d)}}};")
+        s.append(r"\draw[black,dashed,line width=0.7pt] (axis cs:0,0.05) -- (axis cs:0,4.6);")
+        s.append(r"\node[anchor=east,font=\scriptsize,text=fgD] at (axis cs:-0.5,0.32) {$\leftarrow$ heuristic faster};")
+        s.append(r"\node[anchor=west,font=\scriptsize,text=fgD] at (axis cs:0.5,0.32) {slower $\rightarrow$};")
+        s.append(r"\node[anchor=east,font=\scriptsize,text=fgD] at (axis cs:5.45,0.32) {wins};")
+        s.append(r"\end{axis}")
+        partes.append("\n".join(s))
+    escrever("fig_n1_convencoes", r"\centering" "\n" r"\begin{tikzpicture}" "\n" + "\n".join(partes) + "\n" r"\end{tikzpicture}" "\n")
 
 
 # ---------------------------------------------------------------------------------------------------------------- Fig. 3: reinicio
 def fig_reinicio(L):
-    fig, axs = plt.subplots(1, 2, figsize=(6.6, 2.8))
-    ax = axs[0]
-    ts = np.logspace(-3, np.log10(2.0), 300)
     N = len(L)
     raw = gt.af.carregar()
     tg_a = np.concatenate([[0.0], np.logspace(-3, np.log10(2.0), 60)])
-    fh, fg = [], []
+    fh = []
     for t in tg_a:
-        wh = wg = 0
+        wh = 0
         for x in L:
             P = x["peca"] + t * x["nc"]
             wh += gt.af.fo_formal(raw[x["nome"]]["forte"], t)["fo"] < P - 1e-12
-            wg += (x["gtsp"] + t * x["R0"]) < P - 1e-12
         fh.append(100.0 * wh / N)
-        fg.append(100.0 * wg / N)
+    xa = np.maximum(tg_a, 1e-3)
     teH = np.array([(x["peca"] - x["H0.0"]) / (x["R0.25"] - x["nc"]) for x in L if x["R0.25"] > x["nc"] and x["peca"] > x["H0.0"]])
-    ax.axvspan(0.01, 0.06, color=C_GREEN, alpha=0.13, lw=0)
-    ax.axvspan(0.25, 1.0, color=C_ORANGE, alpha=0.13, lw=0)
-    ax.text(0.0245, 99, "thin sheet\n(fibre, 2 mm)", fontsize=6.3, ha="center", va="top", color="#2f6f4f")
-    ax.text(0.5, 99, "thicker\nplate", fontsize=6.3, ha="center", va="top", color="#8a5a00")
-    xp = np.maximum(tg_a, 1e-3)
-    ax.plot(xp, fh, color=C_BLUE, lw=1.6, label="heuristic route (blind; directions re-optimised)")
-    ax.plot(xp, fg, color=C_PURPLE, lw=1.3, ls="--", label="arc-GTSP route of $t=0$")
     med = float(np.median(teH))
-    ax.axvline(med, color=C_RED, lw=0.8, ls=":")
-    ax.text(med * 1.1, 80, f"median per-instance\nbreak-even {med:.3f} s", color=C_RED, fontsize=6.8, va="top", ha="left")
-    ax.set_xscale("log")
-    ax.set_xlim(1e-3, 2)
-    ax.set_ylim(0, 102)
-    ax.set_xlabel("restart cost $t$ (s per run)")
-    ax.set_ylabel(f"% of the {N} instances where the\nroute is faster than contour level")
-    ax.set_title("(a) Break-even over the instances", loc="left")
-    ax.legend(loc="lower left", frameon=False, bbox_to_anchor=(0.0, 0.02), fontsize=6.6)
-    ax = axs[1]
+    a = [r"\begin{axis}[n1axis,grid=none,name=A,xmode=log,width=0.295\textwidth,height=5.0cm,xmin=1e-3,xmax=2.2,ymin=0,ymax=100,ytick={0,25,50,75,100},xtick={1e-3,1e-2,1e-1,1},"
+         r"xlabel={restart cost $t$ (s per run)},ylabel={\% of the " + str(N) + r" instances},title={(a) How often the\\segment level is faster},"
+         r"title style={at={(0,1)},anchor=south west,yshift=0.1cm,align=left}]"]
+    a.append(r"\addplot[black,line width=1.3pt] coordinates {" + cs(xa, fh) + "};")
+    a.append(r"\draw[fgD,dashed,line width=0.7pt] " + f"(axis cs:{g(med)},0) -- (axis cs:{g(med)},100);")
+    a.append(r"\node[anchor=north east,align=right,font=\scriptsize,inner sep=1.5pt] at " + f"(axis cs:2.05,96) {{median\\\\break-even\\\\{med:.3f}\\,s}};")
+    a.append(r"\end{axis}")
     Ls = vn.carregar()
-    tg = np.concatenate([[0.0], np.logspace(-3, 0, 40)])
-    for perfil, ls_, nm in (("BLM_2G", "-", "BLM LS7, 140 m/min, 2 g"), ("DEWIL16", ":", "Dewil et al. curve")):
-        for rota, cor, rotulo in (("H", C_BLUE, "heuristic (blind)"), ("Rep1.0", C_ORANGE, "heuristic + repair ($t=1$)"), ("G0.25", C_GREEN, "restart-aware arc-GTSP ($t=0.25$)")):
-            y = [np.median([100 * (am.total(R[rota], perfil, t) / am.total(R["P"], perfil, t) - 1) for _, R, _ in Ls]) for t in tg]
-            ax.plot(np.maximum(tg, 1e-3), y, color=cor, lw=1.4, ls=ls_, label=f"{rotulo}" if perfil == "BLM_2G" else None)
-    ax.axhline(0, color=C_GREY, lw=0.7)
-    ax.axvspan(0.01, 0.06, color=C_GREEN, alpha=0.13, lw=0)
-    ax.axvspan(0.25, 1.0, color=C_ORANGE, alpha=0.13, lw=0)
-    ax.set_xscale("log")
-    ax.set_xlim(1e-3, 1.05)
-    ax.set_xlabel("restart cost $t$ (s per run)")
-    ax.set_ylabel("total time vs contour level (%, median)")
-    ax.set_title(f"(b) Stored routes, {len(Ls)} instances", loc="left")
-    ax.legend(loc="upper left", frameon=False)
-    fig.tight_layout()
-    fig.savefig(os.path.join(OUT, "fig_n1_reinicio.pdf"), bbox_inches="tight")
-    plt.close(fig)
+    tg = np.logspace(-3, 0, 40)
+    serie = {}
+    for rota in ("H", "Rep1.0", "G0.25"):
+        serie[rota] = [np.median([100 * (am.total(R[rota], "BLM_2G", t) / am.total(R["P"], "BLM_2G", t) - 1) for _, R, _ in Ls]) for t in np.concatenate([[0.0], tg[1:]])]
+    xb = tg
+    b = [r"\begin{axis}[n1axis,grid=none,name=B,at={(A.north east)},anchor=north west,xshift=1.5cm,xmode=log,width=0.295\textwidth,height=5.0cm,xmin=1e-3,xmax=1.05,ymin=0,ymax=12,xtick={1e-3,1e-2,1e-1,1},"
+         r"xlabel={restart cost $t$ (s per run)},ylabel={$\Delta$ total time (\%)},title={(b) Loss of a route that\\ignores the restart cost},"
+         r"title style={at={(0,1)},anchor=south west,yshift=0.1cm,align=left}]"]
+    b.append(r"\addplot[black,line width=1.3pt] coordinates {" + cs(xb, serie["H"]) + "};")
+    b.append(r"\node[anchor=east,font=\scriptsize,inner sep=3pt] at " + f"(axis cs:0.8,{g(serie['H'][-1] + 0.3)}) {{{serie['H'][-1]:+.1f}\\%}};")
+    b.append(r"\end{axis}")
+    c = [r"\begin{axis}[n1axis,grid=none,name=C,at={(B.north east)},anchor=north west,xshift=1.6cm,xmode=log,width=0.295\textwidth,height=5.0cm,xmin=1e-3,xmax=1.05,ymin=-0.15,ymax=0.25,xtick={1e-3,1e-2,1e-1,1},"
+         r"xlabel={restart cost $t$ (s per run)},ylabel={$\Delta$ total time (\%)},title={(c) Restart-aware routes\\(zoomed scale)},"
+         r"title style={at={(0,1)},anchor=south west,yshift=0.1cm,align=left}]"]
+    c.append(r"\draw[black,line width=0.5pt] (axis cs:1e-3,0) -- (axis cs:1.05,0);")
+    c.append(r"\addplot[black,line width=1.2pt,mark=square*,mark size=1.2pt,mark repeat=8] coordinates {" + cs(xb, serie["Rep1.0"]) + "};")
+    c.append(r"\addplot[fgD,line width=1.2pt,dashed,mark=triangle*,mark size=1.4pt,mark repeat=8] coordinates {" + cs(xb, serie["G0.25"]) + "};")
+    c.append(r"\node[anchor=south west,align=left,font=\scriptsize] at (axis cs:1.5e-3,0.14) {heuristic + repair};")
+    c.append(r"\node[anchor=north west,align=left,font=\scriptsize,text=fgD] at (axis cs:1.5e-3,-0.07) {arc-based route};")
+    c.append(r"\end{axis}")
+    escrever("fig_n1_reinicio", r"\centering" "\n" r"\begin{tikzpicture}" "\n" + "\n".join(a + b + c) + "\n" r"\end{tikzpicture}" "\n")
     out = {"figMedBreakEven": f"{med:.3f}"}
     for nome, t in (("Ten", 0.01), ("Six", 0.06), ("Quarter", 0.25), ("One", 1.0)):
         wh = sum(1 for x in L if gt.af.fo_formal(raw[x["nome"]]["forte"], t)["fo"] < x["peca"] + t * x["nc"] - 1e-12)
@@ -294,25 +308,65 @@ def fig_reinicio(L):
     return out
 
 
-# ---------------------------------------------------------------------------------------------------------------- Fig. 4: tempo de voo e vantagem reotimizada
+# ---------------------------------------------------------------------------------------------------------------- Fig. 4: ancoras por espessura contra a curva exata da economia maxima
+def fig_espessura():
+    import analise_ancoras_por_espessura as ae
+    d = ae.dados()
+    F, S = d["faixas"], d["curva"]
+    r1, r3 = ae.LIM_R1, ae.LIM_R3
+    ts = [t for t in ae.TS_CURVA if S[t]]
+    tp = [max(t, 1.6e-3) for t in ts]                                                    # t = 0 desenhado em 1,6e-3 s
+    ys_all = []
+    for t, x in zip(ts, tp):
+        ys_all += [(x, v) for v in S[t]]
+    med = [float(np.median(S[t])) for t in ts]
+    mx = [float(max(S[t])) for t in ts]
+    ytop = max(mx) * 1.62
+
+    def bandas(y0, y1):
+        return (r"\fill[black!5] " f"(axis cs:1e-3,{y0}) rectangle (axis cs:{g(r1)},{y1});\n"
+                r"\fill[black!12] " f"(axis cs:{g(r1)},{y0}) rectangle (axis cs:{g(r3)},{y1});\n"
+                r"\fill[black!22] " f"(axis cs:{g(r3)},{y0}) rectangle (axis cs:30,{y1});\n"
+                r"\draw[black,dotted,line width=0.6pt] " f"(axis cs:{g(r1)},{y0}) -- (axis cs:{g(r1)},{y1}) (axis cs:{g(r3)},{y0}) -- (axis cs:{g(r3)},{y1});")
+    a = [r"\begin{axis}[n1axis,name=A,xmode=log,width=0.84\textwidth,height=5.6cm,ytick={0,0.5,1},xmin=1e-3,xmax=20,ymin=-0.03,ymax=" + g(ytop) + r",xticklabels={},"
+         r"ylabel={largest possible saving (\%)},"
+         r"title={(a) The most that any plan can save over contour-level routing (exact)},title style={at={(0,1)},anchor=south west,yshift=0.05cm},"
+         r"legend style={at={(0.99,0.58)},anchor=north east,font=\scriptsize,draw=none,fill=none},legend cell align=left]"]
+    a.append(bandas("-0.03", g(ytop)))
+    a.append(r"\addplot[forget plot,only marks,mark=*,mark size=0.8pt,fgM] coordinates {" + " ".join(f"({g(x)},{g(v)})" for x, v in ys_all) + "};")
+    a.append(r"\addplot[black,line width=1.3pt,mark=*,mark size=1.6pt] coordinates {" + cs(tp, med) + r"}; \addlegendentry{median over layouts}")
+    a.append(r"\addplot[fgD,line width=1.0pt,dashed,mark=square*,mark size=1.4pt] coordinates {" + cs(tp, mx) + r"}; \addlegendentry{largest layout}")
+    a.append(r"\node[anchor=north,font=\scriptsize,align=center] at " + f"(axis cs:0.0075,{g(ytop * 0.99)}) {{R1: $t\\le0.06$\\,s\\\\restart almost free}};")
+    a.append(r"\node[anchor=north,font=\scriptsize,align=center] at " + f"(axis cs:0.23,{g(ytop * 0.99)}) {{R2: 0.06 to 0.87\\,s}};")
+    a.append(r"\node[anchor=north,font=\scriptsize,align=center] at " + f"(axis cs:5,{g(ytop * 0.99)}) {{R3: $t\\ge0.87$\\,s\\\\no plan beats contour level}};")
+    a.append(r"\node[anchor=north west,font=\tiny,text=fgD] at (axis cs:1.2e-3," + g(ytop * 0.15) + r") {one dot per layout};")
+    a.append(r"\end{axis}")
+    ent = []
+    y0 = 0.0
+    for k in ("thin", "med", "thick"):
+        ent.append((y0, F[k]["rotulo"], F[k]["perf"], F[k]["ret"]))
+        y0 += 3.7
+    yfim = y0 - 3.7 + 2.05 + 0.7
+    b = [r"\begin{axis}[n1axis,name=B,at={(A.south west)},anchor=north west,yshift=-1.0cm,xmode=log,width=0.84\textwidth,height=5.4cm,xmin=1e-3,xmax=20,ymin=-1.0,ymax=" + g(yfim) +
+         r",y dir=reverse,ytick={" + ",".join(f"{g(e[0] + 1.15)},{g(e[0] + 2.05)}" for e in ent) + r"},yticklabels={" + ",".join(["piercing", "resumption (derived)"] * 3) +
+         r"},ymajorgrids=false,xlabel={restart cost $t$ (s per run)},title={(b) Restart cost by sheet thickness (piercing: literature; resumption: derived)},"
+         r"title style={at={(0,1)},anchor=south west,yshift=0.05cm}]"]
+    b.append(bandas("-1.0", g(yfim)))
+    for y, rot, perf, ret in ent:
+        b.append(r"\node[anchor=west,font=\scriptsize\bfseries] at " + f"(axis cs:1.15e-3,{g(y)}) {{{rot}}};")
+        b.append(r"\draw[black,fill=fgD,line width=0.5pt] " + f"(axis cs:{g(perf[0])},{g(y + 1.15 - 0.2)}) rectangle (axis cs:{g(perf[1])},{g(y + 1.15 + 0.2)});")
+        b.append(r"\draw[black,pattern=north east lines,pattern color=black,line width=0.5pt]" + f"(axis cs:{g(ret[0])},{g(y + 2.05 - 0.2)}) rectangle (axis cs:{g(ret[1])},{g(y + 2.05 + 0.2)});")
+    b.append(r"\end{axis}")
+    escrever("fig_n1_espessura", r"\centering" "\n" r"\begin{tikzpicture}" "\n" + "\n".join(a + b) + "\n" r"\end{tikzpicture}" "\n")
+    return {}
+
+
+# ---------------------------------------------------------------------------------------------------------------- Fig. 5: tempo de voo e vantagem reotimizada
 def pct(a, b):
     return 100.0 * (a / b - 1.0)
 
 
 def fig_voo():
-    fig, axs = plt.subplots(1, 2, figsize=(6.6, 3.3), gridspec_kw={"width_ratios": [1, 1.15]})
-    ax = axs[0]
-    d = np.linspace(0, 330, 400)
-    ax.plot(d, vn.tau(d, "LIN"), color=C_GREY, lw=1.2, ls="--", label="linear, 400 u/s (benchmark)")
-    ax.plot(d, am.tau(d, "FIBRA_1G"), color=C_BLUE, lw=1.4, label="trapezoidal, 1667 mm/s, 1.0 g")
-    ax.plot(d, am.tau(d, "SALV_5G"), color=C_PURPLE, lw=1.2, label="trapezoidal, 2600 mm/s, 5 g (Salvagnini L5)")
-    ax.plot(d, vn.tau(d, "DEWIL16"), color=C_RED, lw=1.4, label="Dewil et al. (2016), read from plot")
-    ax.plot(vn.XS, vn.YS, "o", color=C_RED, ms=3)
-    ax.set_xlabel("Chebyshev distance of the air move (drawing units = mm)")
-    ax.set_ylabel("air-move time (s)")
-    ax.set_title("(a) Air-move time models", loc="left")
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), frameon=False, fontsize=6.6, ncol=1)
-    ax = axs[1]
     d1, d0 = os.path.join(A, "tau_reinicio_resultados"), os.path.join(A, "tau_resultados")
     am0 = rv.amostra()
     linhas = []
@@ -331,91 +385,66 @@ def fig_voo():
                 v = pct(T_s, T_p)
                 todos.append(v)
                 (ig if abs(c_s - c_p) <= 1e-6 * max(1.0, c_p) else co).append(v)
-            linhas.append((f"{nome}, $t={t:g}$ s", np.median(todos), np.median(ig), np.median(co), len(co)))
-    y = np.arange(len(linhas))[::-1]
-    w = 0.26
-    ax.barh(y + w, [l[2] for l in linhas], height=w, color=C_BLUE, label="same cut length (routing only)")
-    ax.barh(y, [l[3] for l in linhas], height=w, color=C_ORANGE, label="shared edges (6 layouts)")
-    ax.barh(y - w, [l[1] for l in linhas], height=w, color="#999999", label="all 60 instances")
-    ax.set_yticks(y)
-    ax.set_yticklabels([l[0] for l in linhas])
-    ax.axvline(0, color="black", lw=0.8)
-    ax.set_xlabel("segment level vs contour level, total time (%, median)")
-    ax.set_title("(b) Both levels re-optimised", loc="left")
+            linhas.append((f"{nome}, $t={t:g}$\\,s", float(np.median(todos)), float(np.median(ig)), float(np.median(co)), len(co)))
+    dd = np.linspace(0, 330, 67)
+    a = [r"\begin{axis}[n1axis,name=A,width=0.37\textwidth,height=5.1cm,xmin=0,xmax=335,ymin=0,ymax=0.88,xlabel={Chebyshev distance of the air move (drawing units = mm)},"
+         r"ylabel={time of the air move (s)},title={(a) Time of an air move against its length},title style={at={(0,1)},anchor=south west,yshift=0.05cm},"
+         r"legend style={at={(0.5,-0.33)},anchor=north,font=\scriptsize,draw=none,fill=none,/tikz/every even column/.append style={column sep=0.3cm}},legend columns=2,legend cell align=left]"]
+    a.append(r"\addplot[black,dashed,line width=0.9pt] coordinates {" + cs(dd, vn.tau(dd, "LIN")) + r"}; \addlegendentry{linear, 400 u/s (benchmark)}")
+    a.append(r"\addplot[fgD,line width=1.1pt] coordinates {" + cs(dd, am.tau(dd, "FIBRA_1G")) + r"}; \addlegendentry{trapezoidal, 1.0 g}")
+    a.append(r"\addplot[fgM,line width=1.1pt,dash pattern=on 4pt off 1.5pt on 1pt off 1.5pt] coordinates {" + cs(dd, am.tau(dd, "SALV_5G")) + r"}; \addlegendentry{trapezoidal, 5 g (Salvagnini L5)}")
+    a.append(r"\addplot[black,line width=1.1pt,mark=o,mark size=1.4pt,mark repeat=1,mark phase=1,only marks] coordinates {" + cs(vn.XS, vn.YS) + r"}; \addlegendentry{Dewil et al.\ (2016), read from plot}")
+    a.append(r"\addplot[black,line width=0.9pt,forget plot] coordinates {" + cs(dd, vn.tau(dd, "DEWIL16")) + "};")
+    a.append(r"\end{axis}")
+    y = [3.0, 2.0, 1.0, 0.0]                                                            # de cima para baixo
+    b = [r"\begin{axis}[n1axis,name=B,at={(A.north east)},anchor=north west,xshift=2.8cm,width=0.37\textwidth,height=5.1cm,xmin=-8.2,xmax=3.8,ymin=-0.55,ymax=4.35,"
+         r"ytick={3,2,1,0},ytick style={draw=none},yticklabels={" + ",".join("{" + l[0] + "}" for l in linhas) + r"},ymajorgrids=false,xlabel={difference in total time (\%, median)},"
+         r"title={(b) What is left after re-optimising both levels},title style={at={(0,1)},anchor=south west,yshift=0.05cm},"
+         r"legend style={at={(0.5,-0.33)},anchor=north,font=\scriptsize,draw=none,fill=none},legend columns=1,legend cell align=left]"]
+    for yy in y:
+        b.append(r"\draw[black!15,line width=0.4pt] " f"(axis cs:-8.2,{yy}) -- (axis cs:3.8,{yy});")
+    b.append(r"\draw[black,line width=0.6pt] (axis cs:0,-0.55) -- (axis cs:0,4.35);")
+    b.append(r"\node[anchor=east,font=\scriptsize,text=fgD] at (axis cs:-0.45,4.05) {$\leftarrow$ segment level faster};")
+    b.append(r"\node[anchor=west,font=\scriptsize,text=fgD] at (axis cs:0.45,4.05) {slower $\rightarrow$};")
     for yy, l in zip(y, linhas):
-        for off, v in ((w, l[2]), (0.0, l[3]), (-w, l[1])):
-            txt = (f"{v:+.2f}" if abs(v) < 1 else f"{v:+.1f}").replace("-", "\u2212")
-            ax.text(v - 0.12 if v < -0.5 else 0.12, yy + off, txt, va="center", ha="right" if v < -0.5 else "left", fontsize=6.5)
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), frameon=False, fontsize=6.6, ncol=1)
-    ax.set_xlim(-7.4, 1.4)
-    fig.tight_layout()
-    fig.savefig(os.path.join(OUT, "fig_n1_voo.pdf"), bbox_inches="tight")
-    plt.close(fig)
+        b.append(r"\draw[black!45,line width=0.5pt] " f"(axis cs:{g(min(l[1], l[2], l[3]))},{yy}) -- (axis cs:{g(max(l[1], l[2], l[3]))},{yy});")
+    b.append(r"\addplot[only marks,mark=*,mark size=2.0pt,black] coordinates {" + cs([l[2] for l in linhas], [yy + 0.2 for yy in y]) + r"}; \addlegendentry{routing only (same cut length)}")
+    b.append(r"\addplot[only marks,mark=square*,mark size=2.0pt,mark options={fill=white,draw=black,line width=0.8pt}] coordinates {" + cs([l[3] for l in linhas], y) + r"}; \addlegendentry{shared edges cut once (6 layouts)}")
+    b.append(r"\addplot[only marks,mark=diamond*,mark size=2.6pt,fgM] coordinates {" + cs([l[1] for l in linhas], [yy - 0.2 for yy in y]) + r"}; \addlegendentry{all 60 instances}")
+    for yy, l in zip(y, linhas):
+        txt = (f"{l[3]:+.1f}\\%").replace("-", "$-$")
+        if l[3] < -5:
+            b.append(r"\node[anchor=south,font=\scriptsize,inner sep=2pt] at " + f"(axis cs:{g(l[3])},{yy + 0.1}) {{{txt}}};")
+        else:
+            b.append(r"\node[anchor=south east,font=\scriptsize,inner sep=2pt] at " + f"(axis cs:{g(l[3] - 0.1)},{yy + 0.08}) {{{txt}}};")
+    b.append(r"\end{axis}")
+    escrever("fig_n1_voo", r"\centering" "\n" r"\begin{tikzpicture}" "\n" + "\n".join(a + b) + "\n" r"\end{tikzpicture}" "\n")
     return linhas
 
 
-# ---------------------------------------------------------------------------------------------------------------- Fig. 5: ancoras por espessura contra a curva exata da economia maxima
-def fig_espessura():
-    import analise_ancoras_por_espessura as ae
-    d = ae.dados()
-    F, S, lay = d["faixas"], d["curva"], d["layouts"]
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6.6, 4.9), sharex=True, gridspec_kw={"height_ratios": [1.15, 1.0], "hspace": 0.30})
-    for ax in (ax1, ax2):
-        ax.axvspan(1e-3, ae.LIM_R1, color=C_GREEN, alpha=0.10, lw=0)
-        ax.axvspan(ae.LIM_R1, ae.LIM_R3, color=C_ORANGE, alpha=0.10, lw=0)
-        ax.axvspan(ae.LIM_R3, 30, color=C_RED, alpha=0.10, lw=0)
-        ax.axvline(ae.LIM_R1, color=C_GREY, lw=0.7, ls=":")
-        ax.axvline(ae.LIM_R3, color=C_GREY, lw=0.7, ls=":")
-    ts = [t for t in ae.TS_CURVA if S[t]]
-    tp = [max(t, 1.6e-3) for t in ts]                                                    # t = 0 desenhado em 1,6e-3 s
-    for t, x in zip(ts, tp):
-        ax1.plot([x] * len(S[t]), S[t], ".", color=C_GREY, ms=2.5, alpha=0.6)
-    ax1.plot(tp, [np.median(S[t]) for t in ts], "-o", color=C_BLUE, lw=1.5, ms=3.5, label="median over layouts")
-    ax1.plot(tp, [max(S[t]) for t in ts], "--s", color=C_RED, lw=1.1, ms=3, label="largest layout")
-    ax1.set_ylabel("exact largest saving of any plan\nover the contour-level optimum (%)")
-    ax1.set_title("(a) Exact computation (mixed-integer programme with restart cost)", loc="left")
-    ax1.legend(loc="upper right", frameon=False)
-    ax1.set_ylim(bottom=-0.02)
-    ax1.text(1.3e-3, ax1.get_ylim()[1] * 0.04, "R1", color=C_GREEN, fontsize=8, weight="bold")
-    ax1.text(0.12, ax1.get_ylim()[1] * 0.04, "R2", color="#A66A00", fontsize=8, weight="bold")
-    ax1.text(1.8, ax1.get_ylim()[1] * 0.04, "R3", color=C_RED, fontsize=8, weight="bold")
-    ys, lab = [], []
-    for i, k in enumerate(("thin", "med", "thick")):
-        f = F[k]
-        for j, (tipo, cor) in enumerate((("perf", C_BLUE), ("ret", C_ORANGE))):
-            y = -(i * 2.6 + j)
-            lo, hi = f[tipo]
-            ax2.plot([lo, hi], [y, y], "-", color=cor, lw=6, solid_capstyle="butt")
-            ys.append(y)
-            lab.append(("piercing" if tipo == "perf" else "resumption (derived)"))
-        ax2.text(1.2e-3, -(i * 2.6 + 0.5) + 0.95, f["rotulo"], fontsize=7.4, va="bottom", weight="bold")
-    ax2.set_yticks(ys)
-    ax2.set_yticklabels(lab, fontsize=7)
-    ax2.set_ylim(-7.4, 1.2)
-    ax2.set_xscale("log")
-    ax2.set_xlim(1e-3, 20)
-    ax2.set_xlabel("restart cost $t$ (s per run)")
-    ax2.set_title("(b) Ranges of the restart cost by sheet thickness (literature; resumption derived)", loc="left")
-    ax2.grid(axis="y", alpha=0)
-    fig.savefig(os.path.join(OUT, "fig_n1_espessura.pdf"), bbox_inches="tight")
-    plt.close(fig)
-    return {}
-
-
 def main():
+    alvo = set(sys.argv[1:])                                            # ex.: python gerar_figuras_n1.py brinquedo   (so essa figura; nao reescreve as macros)
+    tudo = not alvo
     mac = {}
-    mac.update(fig_brinquedo())
-    L = gt.carregar_282()
-    fig_convencoes(L)
-    mac.update(fig_reinicio(L))
-    for l in fig_voo():
-        print("voo:", l)
-    mac.update(fig_espessura())
-    with open(os.path.join(AQUI, "N1", "numeros_figuras.tex"), "w", encoding="utf-8") as f:
-        f.write("% gerado por gerar_figuras_n1.py (nada digitado a mao)\n")
-        for k, v in mac.items():
-            assert k.isalpha(), k
-            f.write("\\newcommand{\\" + k + "}{" + v + "}\n")
+    if tudo or "brinquedo" in alvo:
+        mac.update(fig_brinquedo())
+    if tudo or alvo & {"convencoes", "reinicio"}:
+        L = gt.carregar_282()
+        if tudo or "convencoes" in alvo:
+            fig_convencoes(L)
+        if tudo or "reinicio" in alvo:
+            mac.update(fig_reinicio(L))
+    if tudo or "voo" in alvo:
+        for l in fig_voo():
+            print("voo:", l)
+    if tudo or "espessura" in alvo:
+        mac.update(fig_espessura())
+    if tudo:
+        with open(os.path.join(AQUI, "N1", "numeros_figuras.tex"), "w", encoding="utf-8") as f:
+            f.write("% gerado por gerar_figuras_n1.py (nada digitado a mao)\n")
+            for k, v in mac.items():
+                assert k.isalpha(), k
+                f.write("\\newcommand{\\" + k + "}{" + v + "}\n")
     print({k: v for k, v in mac.items()})
 
 

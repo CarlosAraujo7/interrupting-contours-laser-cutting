@@ -184,7 +184,7 @@ def tabela_v2():
                    "vtwoRegret": reg + r"\%", "vtwoRegretMax": regmax + r"\%", "vtwoVant": fmt(float(vant), 2), "vtwoPerfZero": perf0, "vtwoPerfUm": perf1, "vtwoContornos": nc, "vtwoMenos": menos})
     T = [r"\begin{table}[t]", r"\centering\small",
          r"\caption{Confirmatory CPPLib set (pre-specified before any data was generated; " + n + r" layouts of categories never used in development). Segment-level routes with closing precedence against the contour-level PCGLNS reference. Restart cost $t$ in seconds.}",
-         r"\label{tab:n1_v2}", r"\begin{tabular}{p{5.2cm}p{3.4cm}p{4.6cm}}", r"\toprule", r"Pre-specified hypothesis & Criterion & Result \\", r"\midrule",
+         r"\label{tab:n1_v2}", r"\begin{tabular}{>{\raggedright\arraybackslash}p{5.2cm}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{4.6cm}}", r"\toprule", r"Pre-specified hypothesis & Criterion & Result \\", r"\midrule",
          rf"Feasible verified solutions & $\ge 95\%$ & {viab} \\",
          rf"Air-time reduction vs.\ contour level ($t=0$) & median $\ge 20\%$ & {ar}\% (95\% CI [{lo}\%; {hi}\%]); lower in {wins_ar} \\",
          rf"Total time vs.\ contour level ($t=0$) & lower in $\ge 75\%$ & lower in {tot}; median {fmt(float(gap), 2)} \\",
@@ -648,6 +648,34 @@ def tabela_espessura():
         MACROS["tbeLoMax"] = f"{max(lo):.3g}"
 
 
+def legendas_abaixo():
+    r"""Move \caption e \label de cada tabela gerada para depois do \end{tabular} (estilo do LCPP-1: legenda abaixo). Idempotente."""
+    import glob
+    for f in sorted(glob.glob(os.path.join(TAB, "n1_*.tex"))):
+        t = open(f, encoding="utf-8").read()
+        i = t.find("\\caption{")
+        if i < 0 or t.find("\\end{tabular}") < i:
+            continue                                                     # sem legenda ou ja esta abaixo
+        j, nivel = i + len("\\caption"), 0
+        while True:                                                      # casa as chaves da legenda
+            c = t[j]
+            nivel += (c == "{") - (c == "}")
+            j += 1
+            if nivel == 0:
+                break
+        k = j
+        while t[k] in " \n":
+            k += 1
+        if not t.startswith("\\label{", k):
+            raise SystemExit("legenda sem \\label logo depois em " + f)
+        k = t.index("}", k) + 1
+        bloco = t[i:k].strip()
+        t = t[:i] + t[k:].lstrip("\n")
+        fim = t.rindex("\\end{table}")
+        t = t[:fim] + bloco + "\n" + t[fim:]
+        open(f, "w", encoding="utf-8").write(t)
+
+
 def main():
     macros_fendas_resultados()
     macros_rpp_cpplib()
@@ -667,6 +695,7 @@ def main():
     tabela_reparo()
     tabela_teto(L)
     tabela_espessura()
+    legendas_abaixo()
     out = ["% gerado por manuscrito/gerar_tabelas_n1.py -- nao editar a mao"]
     out += [r"\newcommand{\%s}{%s}" % (k, v) for k, v in sorted(MACROS.items())]
     open(os.path.join(AQUI, "N1", "numeros_n1.tex"), "w", encoding="utf-8").write("\n".join(out) + "\n")
