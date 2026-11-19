@@ -716,6 +716,15 @@ def macros_familias(L):
                    "clFamDisj": str(af2.contar_familias(S["disjuntas"])), "clFamMilp": str(af2.contar_familias(S["milp"]))})
 
 
+def macros_repositorio_publico():
+    """O que o repositorio publico do artigo irmao (versao de congresso) tem em comum com o que o N1 usou (`caso_a_corte_multitecnologia/verificar_repositorio_publico_artigo_irmao.py`;
+    conferencia de 19/11/2026: instancias identicas por SHA-256; FO da construcao igual em 267 de 282)."""
+    import verificar_repositorio_publico_artigo_irmao as vp
+    R = vp.resumo()
+    MACROS.update({"pubInst": str(R["n_instancias"]), "pubFoIguais": str(R["fo_iguais"]), "pubFoDif": str(R["fo_diferentes"]), "pubFoDifPack": str(R["diferentes_pack"]),
+                   "pubFoDifMax": f"{R['dif_rel_max_pct']:.2f}" + r"\%"})
+
+
 def tabela_velocidades():
     """Sensibilidade da economia exata maxima as velocidades de corte e de voo (`caso_a_corte_multitecnologia/analise_escala_velocidades.py`; EXPLORATORIO, POS-HOC de 18/11/2026;
     reprocessa os valores exatos guardados, nenhum solver e rodado; o autoteste do modulo confere o cenario do benchmark com a curva exata da Tabela 12 / Fig. 4)."""
@@ -814,6 +823,7 @@ def main():
     tabela_espessura()
     tabela_velocidades()
     macros_familias(L)
+    macros_repositorio_publico()
     legendas_abaixo()
     out = ["% gerado por manuscrito/gerar_tabelas_n1.py -- nao editar a mao"]
     out += [r"\newcommand{\%s}{%s}" % (k, v) for k, v in sorted(MACROS.items())]
