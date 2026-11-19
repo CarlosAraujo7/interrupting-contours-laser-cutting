@@ -845,6 +845,149 @@ def tabela_sem_escala():
     MACROS.update({"exFlA": f"{0.01 * v_mm_s:.0f}", "exFlB": f"{0.1 * v_mm_s:.0f}", "exRhoA": f"{0.01 * v_mm_s / per:.2f}", "exRhoB": f"{0.1 * v_mm_s / per:.2f}"})
 
 
+def macros_proposicao3():
+    """Verificacao numerica da Proposicao 3 (curva exata da economia, convexa e nao crescente; as retas dos planos guardados como cotas inferiores do ponto de equilibrio exato) nos
+    valores exatos guardados (EXPLORATORIO, POS-HOC de 19/11/2026; nenhum solver e rodado; layouts de contornos disjuntos sem furos). Conta como violacao: um programa cujo tempo nao
+    e L/v_c + A/v_a + t R; uma economia S(t) nao convexa ou crescente na grade; uma reta de plano acima do primeiro ponto da grade com economia nula."""
+    import analise_ancoras_por_espessura as ae
+    T = {os.path.basename(f)[:-5]: json.load(open(f)) for f in glob.glob(os.path.join(A, "teto_resultados", "*.json"))}
+    MJ = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(A, "milp_certificado_resultados", "*.json")))]
+    if not T or not MJ:
+        return
+    viol = 0
+    larg_grade, larg_reta, n_aperta = [], [], 0
+    for reg in MJ:
+        r = T[reg["instancia"]]
+        L_, n_, AP, As = r["L_corte"], r["n_contornos"], r["dp"]["ar_otimo_contorno"], r["ar_otimo"]
+        P0 = L_ / VC + AP / VA                                              # otimo EXATO de contorno (DP) em t = 0
+        pts = {0.0: (L_ / VC + min(AP, As) / VA, None, None)}               # (M, R, A) por t da grade; em t = 0 o RPP exato (R nao e guardado)
+        for t in ae.TS_CURVA[1:]:
+            x = reg["t"].get(str(t))
+            if x and x.get("otimo"):
+                pts[t] = (x["M"], x["R"], x["ar_len"])
+                viol += int(abs(x["M"] - (L_ / VC + x["ar_len"] / VA + t * x["R"])) > 1e-6 * x["M"])
+        ts = sorted(pts)
+        S = {t: (P0 + t * n_) - pts[t][0] for t in ts}
+        dec = [(S[b] - S[a]) / (b - a) for a, b in zip(ts, ts[1:])]
+        viol += int(any(d2 < d1 - 1e-6 for d1, d2 in zip(dec, dec[1:]))) + int(any(d > 1e-6 for d in dec))
+        nulo = [t for t in ts if S[t] <= 1e-5 * (P0 + t * n_)]
+        if not nulo:
+            continue
+        t_zero = min(nulo)
+        lo_grade = max([t for t in ts if S[t] > 1e-5 * (P0 + t * n_)] or [0.0])
+        raizes = [(P0 - (L_ / VC + Ak / VA)) / (R - n_) for (_, R, Ak) in pts.values() if R is not None and R > n_ and P0 > L_ / VC + Ak / VA]
+        viol += sum(1 for x in raizes if x > t_zero + 1e-9)                  # uma reta de plano nao pode ultrapassar o primeiro zero da grade
+        lo_reta = max([lo_grade] + raizes)
+        larg_grade.append(t_zero - lo_grade)
+        larg_reta.append(t_zero - lo_reta)
+        n_aperta += int(lo_reta > lo_grade + 1e-9)
+    MACROS.update({"pthLay": str(len(MJ)), "pthViol": str(viol), "pthNBr": str(len(larg_grade)), "pthNTight": str(n_aperta),
+                   "pthWGrid": f"{np.median(larg_grade):.3f}", "pthWLine": f"{np.median(larg_reta):.3f}"})
+
+
+def macros_layouts_reais():
+    """Leitura sem escala nos layouts REAIS do conjunto confirmatorio CPPLib (V2; EXPLORATORIO, POS-HOC de 19/11/2026; so valores guardados em v2_resultados/, nenhum solver e rodado).
+    Economia da rota ciente do reinicio a t = 1 s sobre a referencia de contorno, em % do tempo total, com o contorno cobrado um reinicio por contorno (convencao do artigo, limite
+    superior onde os contornos se tocam); a versao CONSERVADORA cobra so as corridas da rota onde estas sao menos que os contornos. rho_1 = 1 s * v_a / perimetro medio (L_pecas / n)."""
+    from scipy import stats
+    R = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(A, "v2_resultados", "v2_*.json")))]
+    P = [r for r in R if r.get("n_contornos", 0) >= 2 and r.get("peca_10s") and r["seg_t0"]["melhor"] and r["seg_t1"]["melhor"]]
+    if not P:
+        return
+    X = []
+    for r in P:
+        n, Lp = r["n_contornos"], r["L_pecas"]
+        assert abs(Lp - r["L_segmento"]) <= 1e-6 * Lp, "layout com arestas compartilhadas: o texto diz que nao ha nenhum"
+        m1 = r["seg_t1"]["melhor"]
+        tot = r["peca_10s"]["fo_media"] + 1.0 * n
+        S = 100.0 * (tot - m1["fo"]) / tot
+        vies = 100.0 * max(0, n - m1["n_perf"]) / tot                       # reinicios que o nivel de contorno paga a mais se a rota encadeia contornos
+        X.append({"n": n, "per": Lp / n, "rho": 1.0 * VA / (Lp / n), "S": S, "vies": vies, "Sc": S - vies, "chain": m1["n_perf"] < n,
+                  "ve": m1["viol_estrita"] / n if m1.get("viol_estrita") is not None else None})
+    lim = float(MACROS.get("sfNilRho", "0.3"))
+    low, high = [x for x in X if x["rho"] <= lim], [x for x in X if x["rho"] > lim]
+    chain = [x for x in X if x["chain"]]
+    pers = [x for x in high if x["Sc"] > 0.1]
+    sem_pct = lambda v: fmt(v, 2).replace(r"\%", "")
+    sp = lambda a, b: stats.spearmanr(a, b)[0]
+    VE = [x for x in X if x["ve"] is not None]
+    MACROS.update({"rlN": str(len(X)), "rlNmin": str(min(x["n"] for x in X)), "rlNmax": str(max(x["n"] for x in X)),
+                   "rlPerMed": f"{np.median([x['per'] for x in X]):.0f}", "rlPerMin": f"{min(x['per'] for x in X):.0f}", "rlPerMax": f"{max(x['per'] for x in X):.0f}",
+                   "rlRhoMed": f"{np.median([x['rho'] for x in X]):.2f}", "rlRhoMin": f"{min(x['rho'] for x in X):.2f}", "rlRhoMax": f"{max(x['rho'] for x in X):.2f}",
+                   "rlNLow": str(len(low)), "rlNHigh": str(len(high)), "rlNChain": str(len(chain)), "rlThr": "0.1" + r"\%",
+                   "rlSMed": fmt(np.median([x["S"] for x in X]), 2),
+                   "rlSLowMed": fmt(np.median([x["S"] for x in low]), 2), "rlSLowMax": fmt(max(x["S"] for x in low), 2, sinal=False),
+                   "rlSHighMed": fmt(np.median([x["S"] for x in high]), 2), "rlSHighMax": fmt(max(x["S"] for x in high), 2, sinal=False),
+                   "rlSMaxCor": fmt(max(x["Sc"] for x in X), 2, sinal=False),
+                   "rlSpAs": sem_pct(sp([x["rho"] for x in X], [x["S"] for x in X])), "rlSpCor": sem_pct(sp([x["rho"] for x in X], [x["Sc"] for x in X])),
+                   "rlSpViol": sem_pct(sp([x["ve"] for x in VE], [x["Sc"] for x in VE])),
+                   "rlBiasMed": fmt(np.median([x["vies"] for x in chain]), 2, sinal=False) if chain else "0",
+                   "rlPersN": str(len(pers))})
+    if pers:
+        MACROS.update({"rlPersRhoLo": f"{min(x['rho'] for x in pers):.2f}", "rlPersRhoHi": f"{max(x['rho'] for x in pers):.2f}",
+                       "rlPersLo": fmt(min(x["Sc"] for x in pers), 2, sinal=False), "rlPersHi": fmt(max(x["Sc"] for x in pers), 2, sinal=False)})
+
+
+def macros_newton():
+    """Ponto de equilibrio EXATO por iteracao de Newton (Proposicao 3; `caso_a_corte_multitecnologia/newton_exato_tc.py`, pre-especificado em docs/52; MILPs novos de 19/11/2026).
+    So le os resultados guardados em newton_resultados/ (um JSON por layout, com a trilha completa)."""
+    fs = sorted(glob.glob(os.path.join(A, "newton_resultados", "*.json")))
+    if not fs:
+        return
+    R = [json.load(open(f)) for f in fs]
+    ex = [r for r in R if r["status"] == "exato"]
+    MACROS.update({"nwN": str(len(R)), "nwExact": str(len(ex)), "nwNoProof": str(sum(1 for r in R if r["status"] == "sem_prova"))})
+    if not ex:
+        return
+    novos = [sum(1 for x in r["trilha"] if "M" in x) for r in ex]
+    tc = [r["t_c"] for r in ex]
+    rho = [r["t_c"] * VA * r["n"] / r["L"] for r in ex]
+    razao = [r["t_c"] / r["t_cert"] for r in ex]
+    MACROS.update({"nwSolves": str(sum(novos)), "nwSolvesMax": str(max(novos)),
+                   "nwTcMed": f"{np.median(tc):.3f}", "nwTcMin": f"{min(tc):.3f}", "nwTcMax": f"{max(tc):.3f}",
+                   "nwRhoMed": f"{np.median(rho):.2f}", "nwRhoMax": f"{max(rho):.2f}", "nwRatioMed": f"{np.median(razao):.2f}", "nwRatioMax": f"{max(razao):.2f}",
+                   "nwLimA": f"{min(r['limite_s'] for r in R):.0f}",
+                   "nwHfive": "supported" if (0.04 <= np.median(tc) <= 0.15 and max(rho) <= 1) else "not supported",           # previsoes empiricas de docs/52 (H-N5, H-N6)
+                   "nwHsix": "supported" if np.median(razao) <= 0.5 else "not supported"})
+
+
+def macros_causa():
+    """Causa da economia persistente nos layouts aninhados com rho_1 > 0,3 (`caso_a_corte_multitecnologia/causa_aninhados_v2.py`; pre-especificado em docs/52; so le os resultados guardados)."""
+    import causa_aninhados_v2 as cn
+    if not os.path.isdir(cn.OUT):
+        return
+    V2 = cn.v2_dados()
+    nomes = cn.selecionados()
+    c, s, gaps = [], [], []
+    for nome in nomes:
+        r = V2[nome]
+        fe, fd = os.path.join(cn.OUT, f"est_{nome}.json"), os.path.join(cn.OUT, f"dp_{nome}.json")
+        e = json.load(open(fe))["melhor"] if os.path.exists(fe) else None
+        c.append(cn.economia(r, r["seg_t1"]["melhor"]))
+        s.append(cn.economia(r, e) if e else None)
+        d = json.load(open(fd)) if os.path.exists(fd) else None
+        if d and d.get("resolvida"):
+            gaps.append(100.0 * (r["peca_10s"]["fo_media"] / d["fo_otimo"] - 1.0))
+    ok = [(a, b) for a, b in zip(c, s) if b is not None]
+    MACROS.update({"cnN": str(len(nomes)), "cnStrictN": str(len(ok)), "cnDpN": str(len(gaps)),
+                   "cnClosLo": fmt(min(c), 2, sinal=False), "cnClosHi": fmt(max(c), 2, sinal=False)})
+    if ok:
+        MACROS.update({"cnStrLo": fmt(min(b for _, b in ok), 2), "cnStrHi": fmt(max(b for _, b in ok), 2, sinal=False), "cnHalf": str(sum(1 for a, b in ok if b < 0.5 * a)),
+                       "cnNil": str(sum(1 for _, b in ok if abs(b) <= 0.01))})                  # economia estrita nula: |S| <= 0,01% do tempo total
+    if gaps:
+        gmax = max(abs(g) for g in gaps)
+        MACROS["cnDpMax"] = ("0.001" if gmax < 1e-3 else f"{gmax:.3f}") + r"\%"                  # cota superior arredondada para cima (0,001% se menor)
+
+    def economia_replica(sem, nome):                                              # replica com sementes novas (docs/52, D3): economia conservadora ou None
+        f = os.path.join(cn.OUT, f"rep_{sem}_{nome}.json")
+        m = json.load(open(f))["melhor"] if os.path.exists(f) else None
+        return cn.economia(V2[nome], m) if m else None
+    rc, rs = [economia_replica("fechamento", n) for n in nomes], [economia_replica("estrita", n) for n in nomes]
+    if all(x is not None for x in rc + rs):
+        MACROS.update({"cnRepClosLo": fmt(min(rc), 2, sinal=False), "cnRepClosHi": fmt(max(rc), 2, sinal=False), "cnRepStrLo": fmt(min(rs), 2), "cnRepStrHi": fmt(max(rs), 2),
+                       "cnPTres": str(sum(1 for a, b in zip(c, rc) if b >= 0.75 * a)), "cnPQuatro": str(sum(1 for a, b in zip(s, rs) if abs(a - b) <= 0.05))})
+
+
 def tabela_tamanho(L):
     """Tamanho do layout (numero de contornos) nas 282 sinteticas (item 5 de docs/48; EXPLORATORIO, POS-HOC): parcela de voo, ganho da heuristica a t = 0 e ponto de equilibrio, so de valores guardados."""
     from scipy import stats
@@ -952,6 +1095,10 @@ def main():
     tabela_espessura()
     tabela_velocidades()
     tabela_sem_escala()
+    macros_proposicao3()
+    macros_layouts_reais()
+    macros_newton()
+    macros_causa()
     tabela_tamanho(L)
     macros_familias(L)
     macros_repositorio_publico()

@@ -1,0 +1,41 @@
+{
+ "instancia": "Category_-_No_precedence_constraints__Exact_algorithms__Non-convex_outer_contours__snce_5__snce_5",
+ "semantica": "estrita",
+ "sementes": [
+  2,
+  3
+ ],
+ "melhor": {
+  "semente": 2,
+  "fo": 1088.43802168015,
+  "ar": 1823.19995118,
+  "n_perf": 13,
+  "contiguo": true,
+  "geo_ok": true,
+  "viol_fechamento": 0,
+  "viol_estrita": 0
+ },
+ "historico": [
+  {
+   "semente": 2,
+   "fo": 1088.43802168015,
+   "ar": 1823.19995118,
+   "n_perf": 13,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0
+  },
+  {
+   "semente": 3,
+   "fo": 1088.43802168015,
+   "ar": 1823.19995118,
+   "n_perf": 13,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0
+  }
+ ],
+ "tempo_total_s": 106.73506474494934
+}

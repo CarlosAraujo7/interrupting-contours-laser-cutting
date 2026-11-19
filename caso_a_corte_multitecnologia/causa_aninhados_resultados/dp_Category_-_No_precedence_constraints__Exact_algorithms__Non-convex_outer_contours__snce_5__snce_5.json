@@ -1,0 +1,8 @@
+{
+ "instancia": "Category_-_No_precedence_constraints__Exact_algorithms__Non-convex_outer_contours__snce_5__snce_5",
+ "n_contornos": 20,
+ "estados": 100001,
+ "maxestados": 100000,
+ "resolvida": false,
+ "tempo_s": 18.478819131851196
+}

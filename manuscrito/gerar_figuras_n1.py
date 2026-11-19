@@ -230,7 +230,7 @@ def fig_convencoes(L):
         pos = r"at={(A.east)},anchor=west,xshift=0.35cm,yticklabels={}," if k else ""
         nm = "name=B," if k else "name=A,"
         yl = "" if k else r"yticklabels={regular,irregular,with holes,ESICUP-derived},"
-        s = [r"\begin{axis}[n1axis," + nm + pos + yl + r"width=0.43\textwidth,height=5.4cm,xmin=-6.5,xmax=5.6,ymin=0.05,ymax=4.6,y dir=reverse,ytick={1,2,3,4},ymajorgrids=false,xmajorgrids=false,"
+        s = [r"\begin{axis}[n1axis," + nm + pos + yl + r"width=0.43\textwidth,height=5.4cm,xmin=-2.2,xmax=1.8,ymin=0.05,ymax=4.6,y dir=reverse,ytick={1,2,3,4},ymajorgrids=false,xmajorgrids=false,"
              r"xlabel={difference in total time (\%)},title={" + nome + r"},title style={at={(0,1)},anchor=south west,yshift=0.05cm}]"]
         for i, d in enumerate(dados, 1):
             xs = list(d)
@@ -242,11 +242,14 @@ def fig_convencoes(L):
                      f"(axis cs:{g(lo)},{i - 0.12}) -- (axis cs:{g(lo)},{i + 0.12}) (axis cs:{g(hi)},{i - 0.12}) -- (axis cs:{g(hi)},{i + 0.12});")
             s.append(r"\draw[black,line width=0.7pt] " + f"(axis cs:{g(q1)},{i - 0.27}) rectangle (axis cs:{g(q3)},{i + 0.27});")
             s.append(r"\draw[black,line width=1.4pt] " + f"(axis cs:{g(med)},{i - 0.27}) -- (axis cs:{g(med)},{i + 0.27});")
-            s.append(r"\node[anchor=east,font=\scriptsize,inner sep=1pt] at " + f"(axis cs:5.45,{i}) {{{sum(1 for v in d if v < 0)}/{len(d)}}};")
+            s.append(r"\node[anchor=east,font=\scriptsize,inner sep=1pt] at " + f"(axis cs:1.75,{i}) {{{sum(1 for v in d if v < 0)}/{len(d)}}};")
+            fora = [v for v in d if v < -2.2]                                    # pontos abaixo da borda esquerda do eixo: nao desenhados, anotados com o numero e o menor valor
+            if fora:
+                s.append(r"\node[anchor=south west,font=\scriptsize,inner sep=1pt] at " + f"(axis cs:-2.15,{i - 0.3}) {{$\\leftarrow$ {len(fora)}, min{str(round(min(fora), 1)).replace('-', '$-$')}\\%}};")
         s.append(r"\draw[black,dashed,line width=0.7pt] (axis cs:0,0.05) -- (axis cs:0,4.6);")
-        s.append(r"\node[anchor=east,font=\scriptsize,text=fgD] at (axis cs:-0.5,0.32) {$\leftarrow$ heuristic faster};")
-        s.append(r"\node[anchor=west,font=\scriptsize,text=fgD] at (axis cs:0.5,0.32) {slower $\rightarrow$};")
-        s.append(r"\node[anchor=east,font=\scriptsize,text=fgD] at (axis cs:5.45,0.32) {wins};")
+        s.append(r"\node[anchor=east,font=\scriptsize,text=fgD] at (axis cs:-0.06,0.32) {$\leftarrow$ heuristic faster};")
+        s.append(r"\node[anchor=west,font=\scriptsize,text=fgD] at (axis cs:0.06,0.32) {slower $\rightarrow$};")
+        s.append(r"\node[anchor=east,font=\scriptsize,text=fgD] at (axis cs:1.75,0.32) {wins};")
         s.append(r"\end{axis}")
         partes.append("\n".join(s))
     escrever("fig_n1_convencoes", r"\centering" "\n" r"\begin{tikzpicture}" "\n" + "\n".join(partes) + "\n" r"\end{tikzpicture}" "\n")

@@ -1,0 +1,32 @@
+{
+ "instancia": "art_10_irregular_sep",
+ "n": 10,
+ "L": 1222.59095161,
+ "P0": 74.5287148181561,
+ "t_cert": 0.5591846445061148,
+ "hi_grade": 0.25,
+ "partida": [
+  0.06,
+  15,
+  74.05160344344999
+ ],
+ "limite_s": 1800.0,
+ "status": "sem_prova",
+ "t_c": null,
+ "trilha": [
+  {
+   "t": 0.06,
+   "R": 15,
+   "c": 74.05160344344999,
+   "origem": "partida"
+  },
+  {
+   "t": 0.09542227494122243,
+   "origem": "novo",
+   "status": "sem_prova",
+   "motivo": "status 1",
+   "tempo_s": 1800.1413161754608
+  }
+ ],
+ "tempo_total_s": 1800.142314195633
+}

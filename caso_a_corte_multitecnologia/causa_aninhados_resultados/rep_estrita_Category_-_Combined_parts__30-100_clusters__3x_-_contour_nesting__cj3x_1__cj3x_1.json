@@ -1,0 +1,41 @@
+{
+ "instancia": "Category_-_Combined_parts__30-100_clusters__3x_-_contour_nesting__cj3x_1__cj3x_1",
+ "semantica": "estrita",
+ "sementes": [
+  2,
+  3
+ ],
+ "melhor": {
+  "semente": 3,
+  "fo": 3255.0356084323244,
+  "ar": 6599.91839597,
+  "n_perf": 39,
+  "contiguo": true,
+  "geo_ok": true,
+  "viol_fechamento": 0,
+  "viol_estrita": 0
+ },
+ "historico": [
+  {
+   "semente": 2,
+   "fo": 3255.5524000955734,
+   "ar": 6006.63506127,
+   "n_perf": 41,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0
+  },
+  {
+   "semente": 3,
+   "fo": 3255.0356084323244,
+   "ar": 6599.91839597,
+   "n_perf": 39,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0
+  }
+ ],
+ "tempo_total_s": 185.33548259735107
+}

@@ -1,0 +1,11 @@
+{
+ "instancia": "Category_-_Combined_parts__30-100_clusters__1x_-_contour_nesting__cj1x_2__cj1x_2",
+ "n_contornos": 11,
+ "estados": 1025,
+ "maxestados": 100000,
+ "resolvida": true,
+ "custo_abstrato": 38950,
+ "fo_otimo": 862.8342472839356,
+ "violacoes": 0,
+ "tempo_s": 0.10617470741271973
+}

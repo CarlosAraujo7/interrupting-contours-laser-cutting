@@ -1,0 +1,10 @@
+{
+ "data": "2026-11-19 19:03:22",
+ "arquivos": {
+  "newton_exato_tc.py": "55bcd5c6c0bf847c475cc9990bbd23ddae3e263f3a5306343dbe6e6128433e51",
+  "causa_aninhados_v2.py": "7236f76d22aadcffb81d0c014ec1eaafbd4c10f01c32aed51780d3a993693efb",
+  "verificar_certificado_milp.py": "209694d765fe21f7fea5cafcda058fa189c764405f91267de46ea3f16466e066",
+  "teto_certificado.py": "23a5d7aa217d62291e47208a3b4152bf1ffc4ba367a83201e2cc7e8af89331a2",
+  "..\\docs\\52_protocolo_newton_exato_e_causa_aninhados.md": "8b9e756145867f862a39ba953e255b73b77da790d226c5c35289b587bee63cbe"
+ }
+}

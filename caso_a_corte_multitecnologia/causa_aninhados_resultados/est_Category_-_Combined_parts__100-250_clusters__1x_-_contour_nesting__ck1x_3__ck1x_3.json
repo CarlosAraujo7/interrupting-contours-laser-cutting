@@ -1,0 +1,40 @@
+{
+ "instancia": "Category_-_Combined_parts__100-250_clusters__1x_-_contour_nesting__ck1x_3__ck1x_3",
+ "t_perf": 1.0,
+ "n_contornos": 27,
+ "n_pares_pi": 26,
+ "E": 111,
+ "melhor": {
+  "rodada": 0,
+  "fo": 1535.63104676525,
+  "ar": 4944.56862354,
+  "n_perf": 26,
+  "ok": true,
+  "viol_fechamento": 0,
+  "viol_estrita": 0,
+  "tempo_pcglns_s": 47
+ },
+ "historico": [
+  {
+   "rodada": 0,
+   "fo": 1535.63104676525,
+   "ar": 4944.56862354,
+   "n_perf": 26,
+   "ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0,
+   "tempo_pcglns_s": 47
+  },
+  {
+   "rodada": 1,
+   "fo": 1535.63104676525,
+   "ar": 4944.56862354,
+   "n_perf": 26,
+   "ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0,
+   "tempo_pcglns_s": 47
+  }
+ ],
+ "tempo_total_s": 60.20106863975525
+}

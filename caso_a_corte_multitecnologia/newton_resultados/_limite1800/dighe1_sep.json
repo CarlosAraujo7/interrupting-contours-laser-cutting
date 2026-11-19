@@ -1,0 +1,32 @@
+{
+ "instancia": "dighe1_sep",
+ "n": 16,
+ "L": 1632.0,
+ "P0": 99.45499999999998,
+ "t_cert": 0.8125,
+ "hi_grade": 0.25,
+ "partida": [
+  0.06,
+  24,
+  98.73499999999999
+ ],
+ "limite_s": 1800.0,
+ "status": "sem_prova",
+ "t_c": null,
+ "trilha": [
+  {
+   "t": 0.06,
+   "R": 24,
+   "c": 98.73499999999999,
+   "origem": "partida"
+  },
+  {
+   "t": 0.08999999999999986,
+   "origem": "novo",
+   "status": "sem_prova",
+   "motivo": "status 1",
+   "tempo_s": 1800.0748205184937
+  }
+ ],
+ "tempo_total_s": 1800.0758187770844
+}
