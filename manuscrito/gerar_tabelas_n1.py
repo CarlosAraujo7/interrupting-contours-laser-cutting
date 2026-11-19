@@ -19,10 +19,16 @@ A = os.path.join(RAIZ, "caso_a_corte_multitecnologia")
 sys.path.insert(0, A)
 sys.path.insert(0, os.path.join(RAIZ, "src_base"))
 os.environ.setdefault("EZDXF_DISABLE_C_EXT", "1")
-import avaliar_heuristica_formal as af                       # noqa: E402
-from heuristic_core import _DEFAULT_CONFIG as D              # noqa: E402
-
+try:                                                         # a copia do codigo do artigo irmao (src_base/) NAO esta no repositorio publico
+    from heuristic_core import _DEFAULT_CONFIG as D          # noqa: E402
+except ImportError:
+    import types
+    _hc = types.ModuleType("heuristic_core")                 # so as velocidades do benchmark (hipotese A4 do manuscrito): os modulos de analise que o gerador importa
+    _hc._DEFAULT_CONFIG = {"v_cut": 100.0 / 6.0, "v_air": 400.0}   # as leem so para ler resultados guardados; nada do codigo da heuristica e reproduzido aqui
+    sys.modules["heuristic_core"] = _hc
+    D = _hc._DEFAULT_CONFIG
 VC, VA = D["v_cut"], D["v_air"]
+import avaliar_heuristica_formal as af                       # noqa: E402  (so le caminhos guardados quando chamado; `gerar_figuras_n1.py` usa `gt.af`)
 TAB = os.path.join(AQUI, "N1", "tabelas")
 os.makedirs(TAB, exist_ok=True)
 MACROS = {}
@@ -35,12 +41,54 @@ def pct(a, b):
 
 def fmt(x, casas=2, sinal=True):
     s = f"{x:+.{casas}f}" if sinal else f"{x:.{casas}f}"
+    if float(s) == 0.0:                                                   # arredonda para zero: sem sinal (evita "-0.00%"; revisao de 18/11/2026)
+        s = f"{0.0:.{casas}f}"
     return s.replace("-", "$-$") + r"\%"
+
+
+def fmt_sem_pct(x, casas=2):
+    """Como fmt(), mas sem o sinal de percentagem (celulas de tabela com unidade no cabecalho); zero arredondado sai sem sinal."""
+    s = f"{x:+.{casas}f}"
+    if float(s) == 0.0:
+        s = f"{0.0:.{casas}f}"
+    return s.replace("-", "$-$")
+
+
+RESUMO_CAMINHOS = os.path.join(A, "resumos_heuristica_282.json")
+
+
+def _avaliar_caminhos():
+    """Avalia os caminhos guardados da heuristica (que contem a geometria das instancias e NAO e publicado; so existe com o pipeline do artigo irmao):
+    -> {nome: so NUMEROS por instancia}. Esse resumo (`resumos_heuristica_282.json`, sem geometria) permite regenerar todas as tabelas sem os caminhos."""
+    out = {}                                                  # so aqui sao precisos os caminhos guardados
+    for n, r in sorted(af.carregar().items()):
+        cam = r["forte"]
+        pol = af.fo_poligonal(cam, 0.0)
+        t_h = r.get("tempo_s", float("nan"))
+        d = {"listada": r["fo_listada_forte"], "poli": pol["fo"], "saltos": pol["saltos"], "t_heur": None if t_h != t_h else t_h}
+        for t in (0.0,) + TS:
+            f = af.fo_formal(cam, t)
+            d[f"H{t}"], d[f"R{t}"], d[f"ret{t}"], d[f"virg{t}"] = f["fo"], f["corridas"], f["retomadas"], f["virgens"]
+            if t == 0.0:
+                d["ar0"] = f["ar"]                                    # tempo de ar da rota formal da heuristica em t = 0 (Tabela de otimo)
+        out[n] = d
+    return out
+
+
+def _resumos_caminhos():
+    """Com os caminhos guardados: avalia e (re)grava o resumo; sem eles (ou com N1_SEM_CAMINHOS=1): le o resumo publicado no repositorio."""
+    usar_resumo = os.environ.get("N1_SEM_CAMINHOS") == "1" or not os.path.isdir(os.path.join(A, "auditoria_lcpp1", "caminhos_282"))
+    if usar_resumo:
+        print("modo SEM caminhos guardados: usando", os.path.basename(RESUMO_CAMINHOS))
+        return json.load(open(RESUMO_CAMINHOS))
+    R = _avaliar_caminhos()
+    json.dump(R, open(RESUMO_CAMINHOS, "w", encoding="utf-8", newline="\n"), indent=0, sort_keys=True)
+    return R
 
 
 def carregar_282():
     L = []
-    for n, r in sorted(af.carregar().items()):
+    for n, r in sorted(_resumos_caminhos().items()):
         try:
             g = json.load(open(os.path.join(A, "lcpp1_segmento_resultados", f"{n}.json")))
             h = json.load(open(os.path.join(A, "auditoria_lcpp1", "honesta_282", f"{n}.json")))
@@ -48,13 +96,10 @@ def carregar_282():
             continue
         if not g.get("melhor") or "fo_pcglns_honesta" not in h:
             continue
-        cam = r["forte"]
-        pol = af.fo_poligonal(cam, 0.0)
-        x = {"nome": n, "listada": r["fo_listada_forte"], "poli": pol["fo"], "saltos": pol["saltos"], "peca": h["fo_pcglns_honesta"], "gtsp": g["melhor"]["fo"], "R0": g["melhor"]["n_perf"], "nc": g["n_contornos"],
-             "t_gtsp": g.get("tempo_total_s", float("nan")), "t_heur": r.get("tempo_s", float("nan"))}
+        x = {"nome": n, "listada": r["listada"], "poli": r["poli"], "saltos": r["saltos"], "peca": h["fo_pcglns_honesta"], "gtsp": g["melhor"]["fo"], "R0": g["melhor"]["n_perf"], "nc": g["n_contornos"],
+             "t_gtsp": g.get("tempo_total_s", float("nan")), "t_heur": float("nan") if r["t_heur"] is None else r["t_heur"], "ar0": r["ar0"]}
         for t in (0.0,) + TS:
-            f = af.fo_formal(cam, t)
-            x[f"H{t}"], x[f"R{t}"], x[f"ret{t}"], x[f"virg{t}"] = f["fo"], f["corridas"], f["retomadas"], f["virgens"]
+            x[f"H{t}"], x[f"R{t}"], x[f"ret{t}"], x[f"virg{t}"] = r[f"H{t}"], r[f"R{t}"], r[f"ret{t}"], r[f"virg{t}"]
         L.append(x)
     return L
 
@@ -63,7 +108,7 @@ def tabela_convencoes(L):
     linhas = [("Heuristic (executable path) vs.\\ contour-level PCGLNS", "poli", "peca"), ("Heuristic (formal objective) vs.\\ contour-level PCGLNS", "H0.0", "peca"),
               ("Heuristic (formal objective) vs.\\ arc-GTSP + PCGLNS", "H0.0", "gtsp"), ("Heuristic (executable path) vs.\\ arc-GTSP + PCGLNS", "poli", "gtsp")]
     T = [r"\begin{table}[t]", r"\centering\small",
-         r"\caption{The LCPP heuristic under two cost conventions on the " + str(len(L)) + r" synthetic instances (restart cost zero). Relative difference of the total objective; negative favours the first method; wins = instances where it is strictly lower. Executable path: jumps between non-contiguous segments are counted; formal objective: direct chord between consecutive cutting operations (Eq.~3 of the LCPP-1 model).}",
+         r"\caption{The heuristic of the companion manuscript under two cost conventions on the " + str(len(L)) + r" synthetic instances (restart cost zero). Relative difference of the total objective; negative favours the first method; wins = instances where it is strictly lower. Executable path: jumps between non-contiguous segments are counted; formal objective: direct chord between consecutive cutting operations (the objective of the companion manuscript).}",
          r"\label{tab:n1_conv}", r"\begin{tabular}{lrrr}", r"\toprule", r"Comparison & Median & Mean & Wins \\", r"\midrule"]
     for nome, a, b in linhas:
         d = np.array([pct(x[a], x[b]) for x in L])
@@ -90,7 +135,7 @@ def tabela_reinicio(L):
     T = [r"\begin{table}[t]", r"\centering\small",
          r"\caption{Effect of a restart cost $t$ (seconds per interruption of the cut) on the " + str(len(L)) + r" synthetic instances. The heuristic keeps its service order and only its orientations are re-optimised for each $t$; the contour-level cost is the $t=0$ value plus $t$ per contour; the arc-GTSP route is the $t=0$ solution evaluated at $t$ (an upper bound for the restart-aware optimum). Median relative differences of total time (negative favours the first), and instances where the first is lower.}",
          r"\label{tab:n1_t}", r"\begin{tabular}{rrrrrr}", r"\toprule",
-         r"$t$ (s) & Runs: heur./arc-GTSP/contours & Heur.\ vs piece & Wins & Heur.\ vs arc-GTSP$_{0}$ & Arc-GTSP$_{0}$ vs piece \\", r"\midrule"]
+         r"$t$ (s) & \shortstack{Runs: heur./\\arc-GTSP/contours} & \shortstack{Heur.\ vs\\contour level} & Wins & \shortstack{Heur.\ vs\\arc-GTSP$_{0}$} & \shortstack{Arc-GTSP$_{0}$ vs\\contour level} \\", r"\midrule"]
     for t in (0.0,) + TS:
         hp = np.array([pct(x[f"H{t}"], x["peca"] + t * x["nc"]) for x in L])
         hg = np.array([pct(x[f"H{t}"], x["gtsp"] + t * x["R0"]) for x in L])
@@ -128,23 +173,22 @@ def tabela_otimo(L):
         x = next((y for y in L if y["nome"] == n), None)
         try:
             g = json.load(open(os.path.join(A, "lcpp1_segmento_resultados", f"{n}.json")))["melhor"]
-            cam = json.load(open(os.path.join(af.CAM, f"{n}.json")))["forte"]
         except FileNotFoundError:
             continue
         if x is None:
             continue
         cut = r["corte_comprimento"] / VC
-        hf = af.fo_formal(cam, 0.0)
+        hf = {"ar": x["ar0"], "fo": x["H0.0"]}                           # da rota formal da heuristica em t = 0 (resumo por instancia; nao precisa dos caminhos)
         R.append({"hole": "_hole_" in n, "ar_opt": r["ar_otimo"] / VA, "ar_h": hf["ar"], "ar_g": g["ar"] / VA, "ar_p": x["peca"] - cut, "LB": cut + r["ar_otimo"] / VA, "H": hf["fo"], "G": g["fo"], "P": x["peca"]})
     n_total = len(glob.glob(os.path.join(A, "rpp_lcpp1_resultados", "*.json")))
     T = [r"\begin{table}[t]", r"\centering\footnotesize",
          r"\caption{Distance to the exact optimum of the segment-level problem without precedence (MILP, restart cost zero) on small instances (at most 110 vertices after noding; " + f"{len(R)} of {n_total}" +
-         r" solved within 600\,s). Without nesting the exact value is the optimum of the LCPP-1 problem; for layouts with holes it is a lower bound. Air time gap: median (maximum) over instances; at optimum: gap $\le 0.01\%$.}",
+         r" solved within 600\,s). Without nesting the exact value is the optimum of the problem of the companion manuscript; for layouts with holes it is a lower bound. Air time gap: median (maximum) over instances; at optimum: gap $\le 0.01\%$.}",
          r"\label{tab:n1_opt}", r"\begin{tabular}{llrrrr}", r"\toprule", r"Layouts & Method & Air gap, median & Air gap, max & At optimum & Total gap, median \\", r"\midrule"]
     for rot, S in (("No nesting\\\\(optimum)", [x for x in R if not x["hole"]]), ("With holes\\\\(lower bound)", [x for x in R if x["hole"]])):
         if not S:
             continue
-        for k, (nome, ka, kf) in enumerate((("LCPP heuristic", "ar_h", "H"), ("Arc-GTSP + PCGLNS", "ar_g", "G"), ("Contour-level PCGLNS", "ar_p", "P"))):
+        for k, (nome, ka, kf) in enumerate((("Heuristic", "ar_h", "H"), ("Arc-GTSP + PCGLNS", "ar_g", "G"), ("Contour-level PCGLNS", "ar_p", "P"))):
             a = np.array([pct(x[ka], x["ar_opt"]) for x in S if x["ar_opt"] > 1e-9])
             fo = np.array([pct(x[kf], x["LB"]) for x in S])
             pre = rf"\multirow{{3}}{{*}}{{\shortstack[l]{{{rot}, $n={len(S)}$}}}}" if k == 0 else ""
@@ -154,6 +198,7 @@ def tabela_otimo(L):
                 MACROS[f"otAr{tag}"] = fmt(np.median(a), 2)
                 MACROS[f"otFo{tag}"] = fmt(np.median(fo), 3)
                 MACROS[f"otN{tag}"] = f"{int((a <= 0.01).sum())}/{len(a)}"
+                MACROS[f"otArMax{tag}"] = fmt(a.max(), 1)
         T.append(r"\midrule")
     T[-1] = r"\bottomrule"
     T += [r"\end{tabular}", r"\end{table}"]
@@ -205,9 +250,10 @@ def tabela_v3():
             p = os.path.join(TAB, f)
             if os.path.exists(p):
                 os.remove(p)
+        _pular("n1_v3.tex", "as rotas de V3 guardadas nao tem geometria no repositorio publico")
         return
     T = [r"\begin{table}[t]", r"\centering\small",
-         r"\caption{Restart-aware routes on a stratified sample of the synthetic instances (protocol fixed before the data). Median relative differences of total time at restart cost $t$; $G(t)$ is the arc-based solution computed with restart cost $t$, $G_0(t)$ the $t=0$ route evaluated at $t$, $B(t)=\min(G,G_0)$ the best verified segment-level solution, $H(t)$ the LCPP heuristic (formal objective) and $P(t)$ the contour-level reference.}",
+         r"\caption{Restart-aware routes on a stratified sample of the synthetic instances (protocol fixed before the data). Median relative differences of total time at restart cost $t$; $G(t)$ is the arc-based solution computed with restart cost $t$, $G_0(t)$ the $t=0$ route evaluated at $t$, $B(t)=\min(G,G_0)$ the best verified segment-level solution, $H(t)$ the heuristic of the companion manuscript (formal objective) and $P(t)$ the contour-level reference.}",
          r"\label{tab:n1_v3}", r"\begin{tabular}{rrrrrr}", r"\toprule", r"$t$ (s) & $n$ & runs $G_0\to G$ & $G_0/B-1$ & $H/B-1$ & $B/P-1$ \\", r"\midrule"]
     for t in (0.25, 1.0):
         U = [x for x in L if x["t"] == t]
@@ -236,6 +282,7 @@ def tabela_reparo():
         p = os.path.join(TAB, "n1_reparo.tex")
         if os.path.exists(p):
             os.remove(p)
+        _pular("n1_reparo.tex", "as rotas do reparo guardadas nao tem geometria no repositorio publico")
         return
     T = [r"\begin{table}[t]", r"\centering\small",
          r"\caption{Restart-aware repair of the heuristic (pre-specified; same sample as Table~\ref{tab:n1_v3}). Median relative differences of total time at restart cost $t$: the heuristic (H) and the repaired route (Rep) against the best verified segment-level solution $B$ and against the contour-level reference $P$; the fraction of the excess $H-B$ that the repair removes; median search time of the repair (the heuristic itself takes 3\,s).}",
@@ -267,10 +314,12 @@ def tabela_voo():
     """Rotas guardadas sob tempos de voo nao lineares (docs/25): tabela e macros a partir de analise_voo_nao_linear (sem reotimizar)."""
     p = os.path.join(A, "auditoria_lcpp1", "pecas_caminhos")
     if not os.path.isdir(p) or not os.listdir(p):
+        _pular("n1_voo.tex", "faltam as rotas guardadas (`auditoria_lcpp1/pecas_caminhos/`, com geometria)")
         return
     import analise_voo_nao_linear as vn
     L = vn.carregar()
     if not L:
+        _pular("n1_voo.tex", "nenhuma rota guardada pode ser avaliada")
         return
     nomes = {"H": "Heuristic", "Rep1.0": "Heuristic + repair ($t=1$)", "G1.0": "Restart-aware arc-GTSP ($t=1$)"}
     perfis = (("LIN", "Linear"), ("LASER", "Trapezoidal, fast"), ("DEWIL16", "Dewil et al.\\ curve"))
@@ -364,6 +413,7 @@ def tabela_mapa():
     """Mapa de regimes ancorado em fontes (docs/28): rotas guardadas em perfis de movimento de fichas de maquinas e custos de reinicio da literatura."""
     p = os.path.join(A, "auditoria_lcpp1", "pecas_caminhos")
     if not os.path.isdir(p) or not os.listdir(p):
+        _pular("n1_mapa.tex", "faltam as rotas guardadas (`auditoria_lcpp1/pecas_caminhos/`, com geometria)")
         return
     import analise_mapa_regimes as am
     import analise_voo_nao_linear as vn
@@ -377,7 +427,7 @@ def tabela_mapa():
         for t in am.TS:
             h = np.median([100 * (am.total(R["H"], perfil, t) / am.total(R["P"], perfil, t) - 1) for _, R, _ in L])
             g = np.median([100 * (am.total(R["G0.25"], perfil, t) / am.total(R["P"], perfil, t) - 1) for _, R, _ in L])
-            cel.append(f"{h:+.2f} / {g:+.2f}".replace("-", "$-$"))
+            cel.append(f"{fmt_sem_pct(h)} / {fmt_sem_pct(g)}")
         T.append(f"{nome} & " + " & ".join(cel) + r" \\")
     fr = np.median([float(am.tau(R["P"][1], "SALV_5G").sum()) / am.total(R["P"], "SALV_5G", 0.0) for _, R, _ in L])
     fr2 = np.median([float(am.tau(R["P"][1], "FIBRA_1G").sum()) / am.total(R["P"], "FIBRA_1G", 0.0) for _, R, _ in L])
@@ -648,6 +698,49 @@ def tabela_espessura():
         MACROS["tbeLoMax"] = f"{max(lo):.3g}"
 
 
+def macros_familias(L):
+    """Intervalos por FAMILIA (bootstrap por cluster; exploratorio, pos-hoc de 19/11/2026) para as comparacoes nas 282 e numero de familias dos subconjuntos exatos
+    (`caso_a_corte_multitecnologia/analise_familias.py`; revisao duplo-cega, R1-M3: as instancias de uma mesma familia nao sao independentes)."""
+    import analise_familias as af2
+    nomes = [x["nome"] for x in L]
+    MACROS["clN"] = str(af2.verificar_estrutura(nomes))
+    est = {"w": lambda v: 100.0 * float((v < 0).mean()), "med": lambda v: float(np.median(v)), "mean": lambda v: float(v.mean())}
+    for tag, a in (("Poli", "poli"), ("Formal", "H0.0")):
+        v = np.array([pct(x[a], x["peca"]) for x in L])
+        ci = af2.bootstrap(nomes, v, est)
+        MACROS[f"clWins{tag}Lo"], MACROS[f"clWins{tag}Hi"] = f"{ci['w'][0]:.0f}" + r"\%", f"{ci['w'][1]:.0f}" + r"\%"
+        MACROS[f"clMed{tag}Lo"], MACROS[f"clMed{tag}Hi"] = fmt(ci["med"][0], 2), fmt(ci["med"][1], 2)
+        MACROS[f"clMean{tag}Lo"], MACROS[f"clMean{tag}Hi"] = fmt(ci["mean"][0], 2), fmt(ci["mean"][1], 2)
+    S = af2.nomes_de_subconjuntos()
+    MACROS.update({"clFamResolvidas": str(af2.contar_familias(S["resolvidas"])), "clFamSemPi": str(af2.contar_familias(S["sem_pi"])),
+                   "clFamDisj": str(af2.contar_familias(S["disjuntas"])), "clFamMilp": str(af2.contar_familias(S["milp"]))})
+
+
+def tabela_velocidades():
+    """Sensibilidade da economia exata maxima as velocidades de corte e de voo (`caso_a_corte_multitecnologia/analise_escala_velocidades.py`; EXPLORATORIO, POS-HOC de 18/11/2026;
+    reprocessa os valores exatos guardados, nenhum solver e rodado; o autoteste do modulo confere o cenario do benchmark com a curva exata da Tabela 12 / Fig. 4)."""
+    import analise_escala_velocidades as ev
+    D = ev.dados()
+    T = [r"\begin{table}[t]", r"\centering\footnotesize",
+         r"\caption{Sensitivity of the exact ceiling on the saving of any plan to the cutting speed $v_c$ and the air speed $v_a$, in m/min (exploratory, post hoc: the exact values of Section~\ref{sec:res_esp} are rescaled and nothing is solved again; one drawing unit is one millimetre). The first row is the benchmark; the others are illustrative scenarios, whose cutting speeds are assumptions without a source that we could verify and whose air speed is the lowest manufacturer value of Section~\ref{sec:setup_par}. Air share: air time over total time of the contour-level optimum (median over the layouts of disjoint contours). Ceiling: largest saving of any plan over the contour-level optimum, as a share of the total time, at $t=0$ (median; maximum). Nil at: first restart cost of the exact grid at which the median ceiling is nil. $t_{\mathrm{cert}}$: largest certificate of Proposition~\ref{prop:cert}.}",
+         r"\label{tab:n1_vel}", r"\begin{tabular}{lrrrrrr}", r"\toprule",
+         r"Scenario & $v_c$ & $v_a$ & Air share & Ceiling at $t=0$ & Nil at (s) & $t_{\mathrm{cert}}$ (s) \\", r"\midrule"]
+    for d in D:
+        T.append(f"{d['rotulo']} & {d['vc']:g} & {d['va']:g} & {d['voo_med']:.1f}\\% & {d['med'][0.0]:.2f}\\% ({d['max'][0.0]:.2f}\\%) & {d['nil_t']:.2g} & {d['tcert_max']:.2f} " + r"\\")
+        k = d["chave"]
+        MACROS[f"sc{k}Voo"] = f"{d['voo_med']:.1f}" + r"\%"
+        MACROS[f"sc{k}ZMed"] = f"{d['med'][0.0]:.2f}" + r"\%"
+        MACROS[f"sc{k}ZMax"] = f"{d['max'][0.0]:.2f}" + r"\%"
+        MACROS[f"sc{k}Nil"] = f"{d['nil_t']:.2g}"
+        MACROS[f"sc{k}Cert"] = f"{d['tcert_max']:.2f}"
+        MACROS[f"sc{k}RI"] = f"{d['r1']:.3f}"
+        MACROS[f"sc{k}RIII"] = f"{d['r3']:.2f}"
+    if "tEqAirEquil" in MACROS:                                   # o equilibrio mediano da heuristica (distancia de voo equivalente) convertido em tempo a 140 m/min
+        MACROS["tEqAirMsFibre"] = f"{float(MACROS['tEqAirEquil']) / (140 * 1000 / 60.0) * 1000:.0f}"
+    T += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    open(os.path.join(TAB, "n1_velocidades.tex"), "w", encoding="utf-8").write("\n".join(T) + "\n")
+
+
 def legendas_abaixo():
     r"""Move \caption e \label de cada tabela gerada para depois do \end{tabular} (estilo do LCPP-1: legenda abaixo). Idempotente."""
     import glob
@@ -676,7 +769,31 @@ def legendas_abaixo():
         open(f, "w", encoding="utf-8").write(t)
 
 
+TABELAS_PULADAS = []
+
+
+def _pular(tabela, motivo):
+    """Registra e avisa uma tabela que nao pode ser regenerada neste ambiente (as que avaliam rotas guardadas, que contem geometria de instancias, exigem as rotas)."""
+    TABELAS_PULADAS.append(tabela)
+    print(f"AVISO: {tabela} NAO foi regenerada: {motivo}")
+
+
+def _garantir_amostra_v3():
+    """Sem os arquivos de instancia (repositorio publico) `rodar_v3.amostra()` devolve vazio; usa os 60 nomes guardados (`auditoria_lcpp1/nomes_amostra_v3.txt`) e,
+    quando as instancias existem, confere que o sorteio de semente 2027 reproduz exatamente a lista guardada."""
+    import rodar_v3 as rv
+    arq = os.path.join(A, "auditoria_lcpp1", "nomes_amostra_v3.txt")
+    guardados = [s for s in open(arq, encoding="utf-8").read().strip().split(",") if s]
+    sorteados = rv.amostra()
+    if sorteados:
+        assert sorted(sorteados) == sorted(guardados), "a amostra sorteada difere da guardada"
+    else:
+        rv.amostra = lambda: list(guardados)
+        print("amostra V3: usando os nomes guardados (sem os arquivos de instancia)")
+
+
 def main():
+    _garantir_amostra_v3()
     macros_fendas_resultados()
     macros_rpp_cpplib()
     tabela_mapa()
@@ -695,11 +812,15 @@ def main():
     tabela_reparo()
     tabela_teto(L)
     tabela_espessura()
+    tabela_velocidades()
+    macros_familias(L)
     legendas_abaixo()
     out = ["% gerado por manuscrito/gerar_tabelas_n1.py -- nao editar a mao"]
     out += [r"\newcommand{\%s}{%s}" % (k, v) for k, v in sorted(MACROS.items())]
     open(os.path.join(AQUI, "N1", "numeros_n1.tex"), "w", encoding="utf-8").write("\n".join(out) + "\n")
     print("macros:", len(MACROS), "| instancias:", len(L))
+    if TABELAS_PULADAS:
+        print("tabelas NAO regeneradas (precisam das rotas guardadas, que contem geometria):", ", ".join(TABELAS_PULADAS))
     for k, v in sorted(MACROS.items()):
         print(f"  {k} = {v}")
 

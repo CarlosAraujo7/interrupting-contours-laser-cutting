@@ -24,10 +24,10 @@ A = "caso_a_corte_multitecnologia"
 
 ARQUIVOS = [
     "docs/17_protocolo_V2_segmento.md", "docs/19_protocolo_V3_reinicio.md", "docs/21_sensibilidade_pi_estrita_x_fechamento.md", "docs/23_protocolo_reparo_ciente_do_reinicio.md",
-    "docs/24_robustez_e_escala.md", "docs/25_leitura_dewil_completa_e_voo_nao_linear.md", "docs/26_protocolo_reotimizacao_tau.md", "docs/27_protocolo_tau_mais_reinicio.md", "docs/28_ancoras_sem_maquina_rpp_cpplib_e_fendas.md", "docs/34_plano_de_pesquisa_dados_de_maquina_N1.md", "docs/35_base_de_evidencias_de_parametros_de_maquina.md", "docs/LEDGER_USO_IA.md", "ENVIRONMENT.md", "requirements.txt", "LICENSE", "LICENSES.md", "lancar_v3_estrita.sh",
+    "docs/24_robustez_e_escala.md", "docs/25_leitura_dewil_completa_e_voo_nao_linear.md", "docs/26_protocolo_reotimizacao_tau.md", "docs/27_protocolo_tau_mais_reinicio.md", "docs/28_ancoras_sem_maquina_rpp_cpplib_e_fendas.md", "docs/34_plano_de_pesquisa_dados_de_maquina_N1.md", "docs/35_base_de_evidencias_de_parametros_de_maquina.md", "docs/LEDGER_USO_IA.md", "docs/LEDGER_USO_IA_N1_2026-11.md", "ENVIRONMENT.md", "requirements.txt", "LICENSE", "LICENSES.md", "lancar_v3_estrita.sh",
 ]
 PASTAS = [
-    (A, ["*.py", "RESULTADOS_*.md", "v3_manifesto.json", "rpp_exato.json", "lista_varredura_t.txt"], ["lcpp1_segmento_resultados", "estrita_resultados", "reparo_resultados", "escala_resultados", "rpp_lcpp1_resultados",
+    (A, ["*.py", "RESULTADOS_*.md", "v3_manifesto.json", "rpp_exato.json", "lista_varredura_t.txt", "resumos_heuristica_282.json"], ["lcpp1_segmento_resultados", "estrita_resultados", "reparo_resultados", "escala_resultados", "rpp_lcpp1_resultados",
                                                                                                        "segmento_resultados", "v2_resultados", "tau_resultados", "tau_reinicio_resultados", "rpp_cpplib_resultados", "fendas_resultados", "teto_resultados", "milp_certificado_resultados"]),
     (A + "/auditoria_lcpp1", ["*.py", "LEIA-ME.md", "nomes_amostra_v3.txt", "auditoria_resumo.json", "RESULTADOS_CONTINUIDADE_282.txt"], ["honesta_282", "continuidade_282_dp", "pecas_robustez"]),
     ("manuscrito", ["gerar_tabelas_n1.py", "gerar_figuras_n1.py", "montar_suplementar_n1.py", "verificar_referencias_n1.py"], []),
@@ -89,12 +89,12 @@ def main():
 {REPO_URL}
 
 Code, protocols and results for the manuscript **"Interrupting contours in segment-level laser cutting path planning: exact optima, cost conventions, restart costs and air-move times"**
-(Amaro Junior, Costa Santos, Nepomuceno de Carvalho, Pinheiro, Dantas Araújo), prepared for *Computers & Operations Research* [status: in preparation; update on submission]. The repository holds everything needed to
-recompute every number, table and figure of the paper from the stored results, the pre-specified protocols with their dates and code hashes, and the scripts that regenerate the results; it does **not** hold third-party
-instances or the heuristic of the companion manuscript (see "What is NOT here").
+(Amaro Junior, Costa Santos, Nepomuceno de Carvalho, Pinheiro, Dantas Araújo), prepared for *Computers & Operations Research* [status: in preparation; update on submission]. The repository holds the code, the pre-specified protocols with their dates and code hashes, the results of every task per instance,
+a per-instance summary of the costs of the stored paths of the heuristic, and the scripts that regenerate the results and the tables of the paper from them; it does **not** hold the instances or the heuristic of the
+companion work, nor the stored paths of the heuristic (see "What is NOT here" and "What can be reproduced from what").
 
 **Licence:** code and documents under Apache-2.0 (`LICENSE`); third-party components keep their own licences (`LICENSES.md`). **Citation:** `CITATION.cff`. **Contact:** the corresponding author, Bonfim Amaro Junior (bonfim.amaro@uece.br).
-**Use of generative AI:** an AI assistant (Claude, Anthropic) wrote and debugged the code and drafted the protocols and text under the direction of the authors, who reviewed everything; the declaration is in the paper and the usage ledger is in `docs/LEDGER_USO_IA.md`.
+**Use of generative AI:** an AI assistant (Claude, Anthropic) wrote and debugged the code and drafted the protocols and text under the direction of the authors, who reviewed everything; the declaration is in the paper and the usage ledger is in `docs/LEDGER_USO_IA.md` (sessions up to 13 October) and `docs/LEDGER_USO_IA_N1_2026-11.md` (sessions of this manuscript from 14 October on).
 
 ---
 
@@ -113,7 +113,10 @@ coordinates of solution paths were removed from `v3_resultados/*.json` (they rep
   (`instancias_lcpp1.py`), the re-optimisation for non-linear air-move times (`reotimizar_tau.py`, `reotimizar_tau_reinicio.py`), the map of regimes (`analise_mapa_regimes.py`), the exact optima on CPPLib (`rpp_cpplib.py`), the open
   slits (`fendas_segmento.py`), the certified bounds and the exact contour-level optimum (`teto_certificado.py`, independently checked by an exact restart-aware MILP in `verificar_certificado_milp.py`; exploratory, computed after the main results and not pre-specified; report
   `RESULTADOS_TETO_CERTIFICADO.md`), the bibliographic check against Crossref (`manuscrito/verificar_referencias_n1.py`, report in `manuscrito/N1/submissao/`), `manuscrito/gerar_tabelas_n1.py`, which produces every table and result number of the manuscript from the result files, and `manuscrito/gerar_figuras_n1.py`, which produces its five
-  figures (Figure 1 is a toy layout of our own, solved exactly by the script).
+  figures (Figure 1 is a toy layout of our own, solved exactly by the script; all but Figure 3, which plots stored routes, regenerate from this repository alone).
+- **Exploratory analyses added after the main results** (not pre-specified): `analise_escala_velocidades.py` (rescaling of the exact saving to other cutting and air speeds; its self-test reproduces the exact curve of the manuscript) and
+  `analise_familias.py` (intervals by family of instances, because instances of one family are not independent). `resumos_heuristica_282.json` is the per-instance summary of the costs of the stored paths of the heuristic (numbers only,
+  no geometry); `gerar_tabelas_n1.py` reads it when the stored paths are absent (`N1_SEM_CAMINHOS=1`) and rewrites it when they are present.
 - **Results per task** (JSON) and **reports** (`RESULTADOS_*.md`): `lcpp1_segmento_resultados/`, `v3_resultados/`, `estrita_resultados/`, `reparo_resultados/`, `escala_resultados/`, `rpp_lcpp1_resultados/`,
   `segmento_resultados/`, `v2_resultados/`, `tau_resultados/`, `tau_reinicio_resultados/`, `rpp_cpplib_resultados/`, `fendas_resultados/`, `teto_resultados/`, `milp_certificado_resultados/`, `auditoria_lcpp1/{{honesta_282,continuidade_282_dp,pecas_robustez}}/`.
 
@@ -121,12 +124,18 @@ coordinates of solution paths were removed from `v3_resultados/*.json` (they rep
 Our code and documents: Apache License 2.0 (file `LICENSE`); third-party components keep their own licences (`LICENSES.md`). The authors confirm this before publication.
 
 ## What is NOT here, and why
-- **The synthetic instances and the heuristic of the companion manuscript** (`instancias_lcpp1_dados/`, `src_base/`, and the stored paths `auditoria_lcpp1/caminhos_282*/`, which contain instance geometry): third-party
-  material that we do not redistribute. The companion repository gives the instances and the code. The scripts that regenerate the stored paths are `auditoria_lcpp1/caminhos_heuristica_282.py` (it runs on a temporary
+- **The synthetic instances and the heuristic of the companion work** (`instancias_lcpp1_dados/`, `src_base/`, and the stored paths `auditoria_lcpp1/caminhos_282*/`, which contain instance geometry): the instances and the code
+  belong to the companion work (same authors; its manuscript is under review) and are not part of this repository. The scripts that regenerate the stored paths are `auditoria_lcpp1/caminhos_heuristica_282.py` (it runs on a temporary
   copy of the companion pipeline; it does not modify it); because the strong local search of the heuristic is limited by the clock, a regeneration may differ slightly (Section~"Budgets" of the manuscript and
   `docs/24`: 246 of 282 formal costs identical, largest difference 0.23%). The hash of the 282 stored paths used in the manuscript is in `docs/19` (section 7).
 - **CPPLib layouts, PCGLNS, LKH-3**: obtain them from their sources; `LICENSES.md` and `ENVIRONMENT.md` give versions and licences.
 - **Internal working documents and the chronological log.**
+
+## What can be reproduced from what
+- **The tables and numbers computed from the results per instance** (`manuscrito/gerar_tabelas_n1.py`, with `N1_SEM_CAMINHOS=1` or without `auditoria_lcpp1/caminhos_282/`): from the files of this repository alone, with the same output as from the
+  stored paths (checked). **The tables that evaluate stored routes** (the restart-aware routes of the stratified sample, the repair, the stored routes under non-linear air-move times and the map of regimes) need those routes, which contain instance geometry and are not here; the generator reports which tables it skips.
+- **The experiments on CPPLib layouts** (confirmatory set, strict versus closing precedence, open slits, exact optima on CPPLib): this repository plus public data (CPPLib, PCGLNS).
+- **The experiments on the synthetic instances** (cost conventions, restart-aware routes, repair, air-move models, exact optima on the small instances, certificate and exact curve): additionally the instances and the heuristic of the companion work.
 
 ## How to reproduce (outline)
 1. Install the environment of `ENVIRONMENT.md`; obtain the instances and the companion code; run `caminhos_heuristica_282.py` on the companion pipeline (stored paths) and the PCGLNS-by-piece audit
