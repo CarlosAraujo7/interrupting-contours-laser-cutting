@@ -97,7 +97,8 @@ def carregar_282():
         if not g.get("melhor") or "fo_pcglns_honesta" not in h:
             continue
         x = {"nome": n, "listada": r["listada"], "poli": r["poli"], "saltos": r["saltos"], "peca": h["fo_pcglns_honesta"], "gtsp": g["melhor"]["fo"], "R0": g["melhor"]["n_perf"], "nc": g["n_contornos"],
-             "t_gtsp": g.get("tempo_total_s", float("nan")), "t_heur": float("nan") if r["t_heur"] is None else r["t_heur"], "ar0": r["ar0"]}
+             "t_gtsp": g.get("tempo_total_s", float("nan")), "t_heur": float("nan") if r["t_heur"] is None else r["t_heur"], "ar0": r["ar0"],
+             "peca_deles": h.get("fo_pcglns_formula_deles"), "corte_s": h.get("cut_time_fixed")}
         for t in (0.0,) + TS:
             x[f"H{t}"], x[f"R{t}"], x[f"ret{t}"], x[f"virg{t}"] = r[f"H{t}"], r[f"R{t}"], r[f"ret{t}"], r[f"virg{t}"]
         L.append(x)
@@ -105,10 +106,10 @@ def carregar_282():
 
 
 def tabela_convencoes(L):
-    linhas = [("Heuristic (executable path) vs.\\ contour-level PCGLNS", "poli", "peca"), ("Heuristic (formal objective) vs.\\ contour-level PCGLNS", "H0.0", "peca"),
+    linhas = [("Heuristic (cost listed by its code) vs.\\ contour-level PCGLNS", "listada", "peca"), ("Heuristic (executable path) vs.\\ contour-level PCGLNS", "poli", "peca"), ("Heuristic (formal objective) vs.\\ contour-level PCGLNS", "H0.0", "peca"),
               ("Heuristic (formal objective) vs.\\ arc-GTSP + PCGLNS", "H0.0", "gtsp"), ("Heuristic (executable path) vs.\\ arc-GTSP + PCGLNS", "poli", "gtsp")]
     T = [r"\begin{table}[t]", r"\centering\small",
-         r"\caption{The heuristic of the companion manuscript under two cost conventions on the " + str(len(L)) + r" synthetic instances (restart cost zero). Relative difference of the total objective; negative favours the first method; wins = instances where it is strictly lower. Executable path: jumps between non-contiguous segments are counted; formal objective: direct chord between consecutive cutting operations (the objective of the companion manuscript).}",
+         r"\caption{The heuristic of the companion manuscript under three cost conventions on the " + str(len(L)) + r" synthetic instances (restart cost zero). Relative difference of the total objective; negative favours the first method; wins = instances where it is strictly lower. Listed: the value that the code of the heuristic reports, which does not charge the jumps between segments that do not join; executable path: those jumps are counted; formal objective: direct chord between consecutive cutting operations (the objective of the companion manuscript). The contour-level PCGLNS is always costed as an executable path with the legs from and to the origin.}",
          r"\label{tab:n1_conv}", r"\begin{tabular}{lrrr}", r"\toprule", r"Comparison & Median & Mean & Wins \\", r"\midrule"]
     for nome, a, b in linhas:
         d = np.array([pct(x[a], x[b]) for x in L])
@@ -118,6 +119,11 @@ def tabela_convencoes(L):
     dp = np.array([pct(x["poli"], x["peca"]) for x in L])
     df = np.array([pct(x["H0.0"], x["peca"]) for x in L])
     dg = np.array([pct(x["H0.0"], x["gtsp"]) for x in L])
+    dl = np.array([pct(x["listada"], x["peca"]) for x in L])                              # custo listado pelo codigo (como a heuristica foi reportada), mesma referencia de nivel de contorno
+    MACROS.update({"winsList": str(int((dl < 0).sum())), "medList": fmt(np.median(dl), 2), "meanList": fmt(dl.mean(), 2)})
+    dd = np.array([pct(x["listada"], x["peca_deles"]) for x in L if x.get("peca_deles")])  # idem, com o custo que o artigo irmao atribui ao PCGLNS (sem as pernas da origem)
+    if len(dd) == len(L):
+        MACROS.update({"winsListDeles": str(int((dd < 0).sum())), "medListDeles": fmt(np.median(dd), 2), "meanListDeles": fmt(dd.mean(), 2)})
     perd = [x for x, v in zip(L, dp) if v >= 0]
     MACROS["perdasPoli"] = str(len(perd))
     MACROS["perdasPoliHole"] = str(sum(1 for x in perd if "_hole_" in x["nome"]))
@@ -133,7 +139,7 @@ def tabela_convencoes(L):
 
 def tabela_reinicio(L):
     T = [r"\begin{table}[t]", r"\centering\small",
-         r"\caption{Effect of a restart cost $t$ (seconds per interruption of the cut) on the " + str(len(L)) + r" synthetic instances. The heuristic keeps its service order and only its orientations are re-optimised for each $t$; the contour-level cost is the $t=0$ value plus $t$ per contour; the arc-GTSP route is the $t=0$ solution evaluated at $t$ (an upper bound for the restart-aware optimum). Median relative differences of total time (negative favours the first), and instances where the first is lower.}",
+         r"\caption{Effect of a restart cost $t$ (seconds per interruption of the cut) on the " + str(len(L)) + r" synthetic instances. The heuristic keeps its service order and only its orientations are re-optimised for each $t$; the contour-level cost is the $t=0$ value plus $t$ per contour (an upper bound where contours touch, see the text); the arc-GTSP route is the $t=0$ solution evaluated at $t$ (an upper bound for the restart-aware optimum). Median relative differences of total time (negative favours the first), and instances where the first is lower.}",
          r"\label{tab:n1_t}", r"\begin{tabular}{rrrrrr}", r"\toprule",
          r"$t$ (s) & \shortstack{Runs: heur./\\arc-GTSP/contours} & \shortstack{Heur.\ vs\\contour level} & Wins & \shortstack{Heur.\ vs\\arc-GTSP$_{0}$} & \shortstack{Arc-GTSP$_{0}$ vs\\contour level} \\", r"\midrule"]
     for t in (0.0,) + TS:
@@ -163,6 +169,30 @@ def tabela_reinicio(L):
     MACROS["fracRetomadas"] = f"{100 * np.median(ret):.1f}\\%"
 
 
+def macros_corridas_contorno(L):
+    """Corridas da rota de contorno x contornos (item de revisao de 19/11/2026): as Tabelas 7 e 9 cobram t por CONTORNO; onde contornos se tocam a rota de contorno pode encadea-los sem reinicio.
+    Nas instancias da amostra (as corridas ficaram guardadas em `tau_resultados/`) mede quanto muda o ponto de equilibrio mediano se o reinicio for cobrado por corrida da rota de contorno."""
+    import rodar_v3 as rv
+    d0 = os.path.join(A, "tau_resultados")
+    if not os.path.isdir(d0):
+        return
+    por_nome = {x["nome"]: x for x in L}
+    te_nc, te_run, dif = [], [], []
+    for n in rv.amostra():
+        x, f = por_nome.get(n), os.path.join(d0, f"peca_LASER_{n}.json")
+        if x is None or not os.path.exists(f):
+            continue
+        runs_p = json.load(open(f))["corridas"]
+        dif.append(x["nc"] - runs_p)
+        if x["peca"] > x["H0.0"]:
+            if x["R0.25"] > x["nc"]:
+                te_nc.append((x["peca"] - x["H0.0"]) / (x["R0.25"] - x["nc"]))
+            if x["R0.25"] > runs_p:
+                te_run.append((x["peca"] - x["H0.0"]) / (x["R0.25"] - runs_p))
+    if dif and te_nc and te_run:
+        MACROS.update({"nSampleRuns": str(len(dif)), "nDifRuns": str(sum(1 for d in dif if d > 0)), "tEqSampleNc": f"{statistics.median(te_nc):.3f}", "tEqSampleRun": f"{statistics.median(te_run):.3f}"})
+
+
 def tabela_otimo(L):
     R = []
     for f in sorted(glob.glob(os.path.join(A, "rpp_lcpp1_resultados", "*.json"))):
@@ -183,7 +213,7 @@ def tabela_otimo(L):
     n_total = len(glob.glob(os.path.join(A, "rpp_lcpp1_resultados", "*.json")))
     T = [r"\begin{table}[t]", r"\centering\footnotesize",
          r"\caption{Distance to the exact optimum of the segment-level problem without precedence (MILP, restart cost zero) on small instances (at most 110 vertices after noding; " + f"{len(R)} of {n_total}" +
-         r" solved within 600\,s). Without nesting the exact value is the optimum of the problem of the companion manuscript; for layouts with holes it is a lower bound. Air time gap: median (maximum) over instances; at optimum: gap $\le 0.01\%$.}",
+         r" solved within the time limit, 600\,s or 900\,s on repeat). Without nesting the exact value is the optimum of the problem of the companion manuscript; for layouts with holes it is a lower bound. Air time gap: median (maximum) over instances (a large maximum is a ratio over an exact air time close to zero); at optimum: gap $\le 0.01\%$.}",
          r"\label{tab:n1_opt}", r"\begin{tabular}{llrrrr}", r"\toprule", r"Layouts & Method & Air gap, median & Air gap, max & At optimum & Total gap, median \\", r"\midrule"]
     for rot, S in (("No nesting\\\\(optimum)", [x for x in R if not x["hole"]]), ("With holes\\\\(lower bound)", [x for x in R if x["hole"]])):
         if not S:
@@ -269,6 +299,8 @@ def tabela_v3():
         MACROS[f"vtreeHeur{letra}"] = fmt(np.median(hx), 2)
         MACROS[f"vtreeBP{letra}"] = fmt(np.median(bp), 2)
         MACROS[f"vtreeBPwins{letra}"] = f"{int((bp < 0).sum())}/{len(U)}"
+        if t == 1.0:
+            MACROS["vtreeRet"] = f"{100 * sum(x['ret'] for x in U) / sum(x['R'] for x in U):.1f}" + r"\%"      # H-W5: corridas que recomecam em vertice ja cortado (como `analise_v3.py`)
     T += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     open(os.path.join(TAB, "n1_v3.tex"), "w", encoding="utf-8").write("\n".join(T) + "\n")
     MACROS["nVtree"] = str(len(S))
@@ -367,6 +399,10 @@ def tabela_tau():
                        f"tau{sfx}Shared": fmt(np.median(r_co), 1), f"tau{sfx}Ar": fmt(np.median(ar), 1), f"tau{sfx}Wins": f"{sum(1 for x in todos if x < -1e-9)}/{len(S)}",
                        f"tau{sfx}MovS": f"{np.median([x[4] for x in S]):.0f}", f"tau{sfx}MovP": f"{np.median([x[5] for x in S]):.0f}"})
         MACROS["tauNShared"] = str(len(co))
+        import re
+        _m = re.search(r"m\xe1x\. ([\d.]+)%; dentro de 0,05% em (\d+)/(\d+)", open(os.path.join(A, "RESULTADOS_TAU_ANALISE.md"), encoding="utf-8").read())
+        if _m:
+            MACROS.update({"tauReprMax": f"{float(_m.group(1)):.2f}" + r"\%", "tauReprN": _m.group(2), "tauReprTot": _m.group(3)})
         MACROS["tauNSame"] = str(len(ig))
     T += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     open(os.path.join(TAB, "n1_tau.tex"), "w", encoding="utf-8").write("\n".join(T) + "\n")
@@ -422,13 +458,18 @@ def tabela_mapa():
     T = [r"\begin{table}[t]", r"\centering\footnotesize",
          r"\caption{Map of regimes anchored in published data (exploratory; " + str(len(L)) + r" synthetic instances; stored routes, not re-optimised). Each cell gives the median of $T/T_P-1$ in percent for the heuristic that ignores the restart cost and for the restart-aware arc-based route ($t=0.25$\,s), against the contour-level route. Motion profiles: trapezoidal, with the speeds and accelerations that manufacturers publish (170\,m/min simultaneous speed of TRUMPF, Bystronic and Salvagnini machines with the 1.4\,g of an Amada machine \citep{trumpf3030fiber,bystronic2025bystarfiber,salvagnini2026l3g4,amada2026ensis}; the BLM LS7 \citep{blm2026ls7}; the Salvagnini L5, whose 5\,g holds on short moves of thin sheet \citep{salvagnini2026l5}), a reference of our own, and the curve of \citet{dewil2016review}. Restart costs: $t=0.01$ and $0.06$\,s bracket the breakthrough time of 2\,mm steel with a fibre laser \citep{hashemzadeh2014piercing}; $t=0.25$ and $1$\,s stand for thicker plate \citep{westmfg2018piercing,prima2015platino,garcia2019piercing}. One drawing unit is taken as one millimetre.}",
          r"\label{tab:n1_mapa}", r"\begin{tabular}{lrrrrr}", r"\toprule", r"Motion profile & $t=0$ & $t=0.01$ & $t=0.06$ & $t=0.25$ & $t=1$ \\", r"\midrule"]
+    HMED = {}
     for perfil, nome in perfis:
         cel = []
         for t in am.TS:
             h = np.median([100 * (am.total(R["H"], perfil, t) / am.total(R["P"], perfil, t) - 1) for _, R, _ in L])
+            HMED[(perfil, round(t, 2))] = h
             g = np.median([100 * (am.total(R["G0.25"], perfil, t) / am.total(R["P"], perfil, t) - 1) for _, R, _ in L])
             cel.append(f"{fmt_sem_pct(h)} / {fmt_sem_pct(g)}")
         T.append(f"{nome} & " + " & ".join(cel) + r" \\")
+    for t_, nm_ in ((0.01, "Ten"), (0.06, "Six"), (0.25, "Quarter"), (1.0, "One")):                      # faixa, entre os perfis de movimento, da perda da heuristica que ignora o reinicio
+        v_ = [h_ for (_, tt), h_ in HMED.items() if tt == t_]
+        MACROS[f"mapaH{nm_}Lo"], MACROS[f"mapaH{nm_}Hi"] = fmt(min(v_), 2 if t_ == 0.01 else 1, sinal=False), fmt(max(v_), 2 if t_ == 0.01 else 1, sinal=False)
     fr = np.median([float(am.tau(R["P"][1], "SALV_5G").sum()) / am.total(R["P"], "SALV_5G", 0.0) for _, R, _ in L])
     fr2 = np.median([float(am.tau(R["P"][1], "FIBRA_1G").sum()) / am.total(R["P"], "FIBRA_1G", 0.0) for _, R, _ in L])
     MACROS["mapaArFrMin"] = f"{100 * fr:.1f}" + r"\%"
@@ -463,6 +504,7 @@ def tabela_tau_reinicio():
             T.append(f"{nome} & {t:g} & {fmt(np.median(todos), 3)} & {fmt(np.median(r_ig), 3)} ({sum(1 for x in r_ig if x < -1e-9)}/{len(ig)}) & {fmt(np.median(r_co), 1)} & {fmt(np.median(ex), 2)} " + r"\\")
             MACROS.update({f"tr{sfx}{tg}All": fmt(np.median(todos), 3), f"tr{sfx}{tg}Same": fmt(np.median(r_ig), 3), f"tr{sfx}{tg}Shared": fmt(np.median(r_co), 1), f"tr{sfx}{tg}Ex": fmt(np.median(ex), 2),
                            f"tr{sfx}{tg}ExMax": fmt(max(ex), 0), f"tr{sfx}{tg}Runs": f"{np.median([x[5] for x in R]):.0f}"})
+            MACROS["trNcont"] = f"{np.median([json.load(open(os.path.join(A, 'lcpp1_segmento_resultados', f'{n}.json')))['n_contornos'] for n in rv.amostra()]):.0f}"       # contornos (nao corridas) da amostra
     T += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     open(os.path.join(TAB, "n1_taur.tex"), "w", encoding="utf-8").write("\n".join(T) + "\n")
 
@@ -696,6 +738,9 @@ def tabela_espessura():
         MACROS["tbeHiMed"] = f"{np.median(hi):.3g}"
         MACROS["tbeHiMax"] = f"{max(hi):.3g}"
         MACROS["tbeLoMax"] = f"{max(lo):.3g}"
+        comuns = [m for m in por_lay.values() if all(t in m for t in grade)]                       # curva exata so nos layouts resolvidos em toda a grade (mesma amostra em todos os pontos)
+        for t in grade:
+            MACROS[f"com{letra[t]}"] = f"{np.median([m[t] for m in comuns]):.2f}" + r"\%"
 
 
 def macros_familias(L):
@@ -748,6 +793,89 @@ def tabela_velocidades():
         MACROS["tEqAirMsFibre"] = f"{float(MACROS['tEqAirEquil']) / (140 * 1000 / 60.0) * 1000:.0f}"
     T += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     open(os.path.join(TAB, "n1_velocidades.tex"), "w", encoding="utf-8").write("\n".join(T) + "\n")
+
+
+def tabela_sem_escala():
+    """Leitura SEM ESCALA da economia exata (item 4 de docs/48; EXPLORATORIO, POS-HOC de 19/11/2026; nenhum solver e rodado; so valores exatos guardados).
+    A solucao otima so depende de t e de v_a por t*v_a (a distancia de voo que um reinicio vale); em unidades do proprio layout:
+    rho = t * v_a / perimetro medio de contorno, com perimetro medio = L/n (comprimento de corte / numero de contornos). Fracao da economia = (T_P - T_otimo) / (tempo de voo do otimo de contorno)."""
+    import teto_certificado as tc
+    import analise_ancoras_por_espessura as ae
+    T = {os.path.basename(f)[:-5]: json.load(open(f)) for f in glob.glob(os.path.join(A, "teto_resultados", "*.json"))}
+    MJ = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(A, "milp_certificado_resultados", "*.json")))]
+    if not T or not MJ:
+        return
+    Dj = [r for r in T.values() if r.get("P0") is not None and tc.disjunta(r)]
+    rc = [(r["dp"]["ar_otimo_contorno"] - r["ar_otimo"]) * r["n_contornos"] / r["L_corte"] for r in Dj]                  # rho_cert = (A_P* - A*) / (L/n) = t_cert v_a / (L/n)
+    pares = []
+    for reg in MJ:
+        r = T[reg["instancia"]]
+        L_, n_, AP, As = r["L_corte"], r["n_contornos"], r["dp"]["ar_otimo_contorno"], r["ar_otimo"]
+        for t in ae.TS_CURVA:
+            if t == 0.0:
+                Q = min(AP, As) / VA                                       # RPP exato (layout disjunto sem furos)
+            else:
+                x = reg["t"].get(str(t))
+                if not x or not x.get("otimo"):
+                    continue
+                Q = x["M"] - L_ / VC                                       # tempo sem corte do plano otimo (voo + reinicios), velocidades do benchmark
+            QP = AP / VA + t * n_
+            pares.append((t * VA * n_ / L_, max(0.0, QP - Q) / (AP / VA)))
+    faixas = (("Z", r"$0$ (free restart)", lambda p: p == 0.0), ("A", r"$(0,\,0.1]$", lambda p: 0.0 < p <= 0.1), ("B", r"$(0.1,\,0.3]$", lambda p: 0.1 < p <= 0.3),
+              ("C", r"$(0.3,\,1]$", lambda p: 0.3 < p <= 1.0), ("D", r"$>1$", lambda p: p > 1.0))
+    bordas = {"A": 0.0, "B": 0.1, "C": 0.3, "D": 1.0}                                    # borda inferior de cada faixa (para o macro sfNilRho)
+    Tx = [r"\begin{table}[t]", r"\centering\small",
+          r"\caption{Exact saving of any plan in scale-free terms (exploratory, post hoc; stored exact values, nothing is solved again). $\bar\ell$ is the mean contour perimeter of a layout (cutting length over number of contours) and $\rho=t\,v_a/\bar\ell$ the flight distance that one restart is worth, in mean perimeters. Saving: share of the air time of the contour-level optimum that the optimal plan of the mixed-integer programme with restart cost removes; median (maximum) over the " + str(len(pares)) +
+          r" programmes (layout, restart cost) of Section~\ref{sec:res_esp}, on " + str(len(MJ)) + r" layouts of disjoint contours without holes.}",
+          r"\label{tab:n1_sf}", r"\begin{tabular}{lrrr}", r"\toprule", r"$\rho$ & Programmes & Saving, median & Saving, max \\", r"\midrule"]
+    for k, rot, cond in faixas:
+        S = [s for p, s in pares if cond(p)]
+        if not S:
+            continue
+        Tx.append(f"{rot} & {len(S)} & {100 * np.median(S):.1f}\\% & {100 * max(S):.1f}\\% " + r"\\")
+        MACROS[f"sf{k}Med"], MACROS[f"sf{k}Max"], MACROS[f"sf{k}N"] = f"{100 * np.median(S):.0f}" + r"\%", f"{100 * max(S):.0f}" + r"\%", str(len(S))
+        if k in bordas and np.median(S) < 5e-4 and "sfNilRho" not in MACROS:                # primeira faixa de rho em que a mediana da economia e nula
+            MACROS["sfNilRho"] = f"{bordas[k]:g}"
+    Tx += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    open(os.path.join(TAB, "n1_semescala.tex"), "w", encoding="utf-8").write("\n".join(Tx) + "\n")
+    MACROS.update({"sfPares": str(len(pares)), "sfLay": str(len(MJ)), "rhoCertMed": f"{np.median(rc):.1f}", "rhoCertLo": f"{min(rc):.1f}", "rhoCertHi": f"{max(rc):.1f}",
+                   "sfPerMed": f"{np.median([r['L_corte'] / r['n_contornos'] for r in Dj]):.0f}"})
+    # exemplo ilustrativo (premissas, nao dados): reinicio de 10 ms e de 0,1 s numa maquina que voa a 140 m/min, contornos de perimetro medio 300 mm
+    v_mm_s, per = 140 * 1000 / 60.0, 300.0
+    MACROS.update({"exFlA": f"{0.01 * v_mm_s:.0f}", "exFlB": f"{0.1 * v_mm_s:.0f}", "exRhoA": f"{0.01 * v_mm_s / per:.2f}", "exRhoB": f"{0.1 * v_mm_s / per:.2f}"})
+
+
+def tabela_tamanho(L):
+    """Tamanho do layout (numero de contornos) nas 282 sinteticas (item 5 de docs/48; EXPLORATORIO, POS-HOC): parcela de voo, ganho da heuristica a t = 0 e ponto de equilibrio, so de valores guardados."""
+    from scipy import stats
+    X = []
+    for x in L:
+        if not x.get("corte_s"):
+            return
+        ar_p = x["peca"] - x["corte_s"]
+        per = x["corte_s"] * VC / x["nc"]
+        te = (x["peca"] - x["H0.0"]) / (x["R0.25"] - x["nc"]) if (x["R0.25"] > x["nc"] and x["peca"] > x["H0.0"]) else None
+        X.append({"n": x["nc"], "per": per, "alpha": 100 * ar_p / x["peca"], "ganho": 100 * (x["peca"] - x["H0.0"]) / x["peca"], "ganho_ar": 100 * (x["peca"] - x["H0.0"]) / ar_p, "te": te, "rho": te * VA / per if te else None})
+    faixas = ((10, 20, "10 to 20"), (21, 40, "21 to 40"), (41, 80, "41 to 80"), (81, 10 ** 6, "81 to " + str(max(x["n"] for x in X))))
+    Tx = [r"\begin{table}[t]", r"\centering\small",
+          r"\caption{Layout size on the " + str(len(X)) + r" synthetic instances (exploratory, post hoc; stored values). Air share: air time over total time of the contour-level route, at $t=0$. Gain: reduction of the total time and of the air time of the contour-level route that the heuristic obtains under the formal cost, at $t=0$. Break-even: restart cost at which the heuristic stops being ahead (Eq.~\eqref{eq:tstar}), in seconds and in mean contour perimeters ($\rho^\ast=t^\ast v_a/\bar\ell$), over the instances in which it is ahead at $t=0$ and cuts more runs than contours. $\bar\ell$: mean contour perimeter in drawing units. Medians.}",
+          r"\label{tab:n1_size}", r"\begin{tabular}{lrrrrrrr}", r"\toprule",
+          r"Contours & Instances & $\bar\ell$ & Air share & \shortstack{Gain,\\total} & \shortstack{Gain,\\air} & \shortstack{Break-even\\(s)} & $\rho^\ast$ \\", r"\midrule"]
+    for lo, hi, rot in faixas:
+        S = [x for x in X if lo <= x["n"] <= hi]
+        if not S:
+            continue
+        B = [x for x in S if x["te"]]
+        Tx.append(f"{rot} & {len(S)} & {np.median([x['per'] for x in S]):.0f} & {np.median([x['alpha'] for x in S]):.2f}\\% & {np.median([x['ganho'] for x in S]):.2f}\\% & {np.median([x['ganho_ar'] for x in S]):.0f}\\% & {np.median([x['te'] for x in B]):.3f} & {np.median([x['rho'] for x in B]):.2f} " + r"\\")
+    Tx += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    open(os.path.join(TAB, "n1_tamanho.tex"), "w", encoding="utf-8").write("\n".join(Tx) + "\n")
+    n_ = [x["n"] for x in X]
+    B = [x for x in X if x["rho"]]
+    MACROS.update({"sizeNmin": str(min(n_)), "sizeNmed": f"{np.median(n_):.0f}", "sizeNmax": str(max(n_)),
+                   "sizeSpAir": fmt(stats.spearmanr(n_, [x["alpha"] for x in X])[0], 2), "sizeSpGain": fmt(stats.spearmanr(n_, [x["ganho"] for x in X])[0], 2),
+                   "sizeSpRho": fmt(stats.spearmanr([x["n"] for x in B], [x["rho"] for x in B])[0], 2), "sizeRhoMed": f"{np.median([x['rho'] for x in B]):.2f}"})
+    for k in ("SpAir", "SpGain", "SpRho"):                                    # coeficientes de Spearman: sem o sinal de percentagem
+        MACROS["size" + k] = MACROS["size" + k].replace(r"\%", "")
 
 
 def legendas_abaixo():
@@ -815,6 +943,7 @@ def main():
     L = carregar_282()
     tabela_convencoes(L)
     tabela_reinicio(L)
+    macros_corridas_contorno(L)
     tabela_otimo(L)
     tabela_v2()
     tabela_v3()
@@ -822,6 +951,8 @@ def main():
     tabela_teto(L)
     tabela_espessura()
     tabela_velocidades()
+    tabela_sem_escala()
+    tabela_tamanho(L)
     macros_familias(L)
     macros_repositorio_publico()
     legendas_abaixo()

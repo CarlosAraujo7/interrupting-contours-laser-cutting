@@ -297,6 +297,11 @@ def fig_reinicio(L):
     c.append(r"\end{axis}")
     escrever("fig_n1_reinicio", r"\centering" "\n" r"\begin{tikzpicture}" "\n" + "\n".join(a + b + c) + "\n" r"\end{tikzpicture}" "\n")
     out = {"figMedBreakEven": f"{med:.3f}"}
+    serieD = {rota: [np.median([100 * (am.total(R[rota], "DEWIL16", t) / am.total(R["P"], "DEWIL16", t) - 1) for _, R, _ in Ls]) for t in np.concatenate([[0.0], tg[1:]])] for rota in ("H", "Rep1.0", "G0.25")}
+    sp = lambda x, c: (f"{x:+.{c}f}").replace("-", "$-$") + r"\%"
+    vD = [v for rota in ("Rep1.0", "G0.25") for v in serieD[rota]]
+    out.update({"figHBlmOne": f"{abs(serie['H'][-1]):.1f}" + r"\%", "figHDewOne": f"{abs(serieD['H'][-1]):.1f}" + r"\%",          # legenda da Fig. 3: nada digitado a mao
+                "figRepAbsMax": f"{max(abs(v) for rota in ('Rep1.0', 'G0.25') for v in serie[rota]):.2f}" + r"\%", "figDewLo": sp(min(vD), 2), "figDewHi": sp(max(vD), 2)})
     for nome, t in (("Ten", 0.01), ("Six", 0.06), ("Quarter", 0.25), ("One", 1.0)):
         wh = sum(1 for x in L if gt.af.fo_formal(raw[x["nome"]]["forte"], t)["fo"] < x["peca"] + t * x["nc"] - 1e-12)
         wg = sum(1 for x in L if x["gtsp"] + t * x["R0"] < x["peca"] + t * x["nc"] - 1e-12)
