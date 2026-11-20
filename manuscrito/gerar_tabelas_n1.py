@@ -946,7 +946,8 @@ def macros_newton():
     MACROS.update({"nwSolves": str(sum(novos)), "nwSolvesMax": str(max(novos)),
                    "nwTcMed": f"{np.median(tc):.3f}", "nwTcMin": f"{min(tc):.3f}", "nwTcMax": f"{max(tc):.3f}",
                    "nwRhoMed": f"{np.median(rho):.2f}", "nwRhoMax": f"{max(rho):.2f}", "nwRatioMed": f"{np.median(razao):.2f}", "nwRatioMax": f"{max(razao):.2f}",
-                   "nwLimA": f"{min(r['limite_s'] for r in R):.0f}",
+                   "nwLimA": f"{min(r['limite_s'] for r in R):.0f}", "nwLimB": f"{max(r['limite_s'] for r in R):.0f}",
+                   "nwRetry": str(sum(1 for r in R if r["limite_s"] == max(q["limite_s"] for q in R))) if len({q["limite_s"] for q in R}) > 1 else "0",     # layouts repetidos com o limite maior (docs/52, D4)
                    "nwHfive": "supported" if (0.04 <= np.median(tc) <= 0.15 and max(rho) <= 1) else "not supported",           # previsoes empiricas de docs/52 (H-N5, H-N6)
                    "nwHsix": "supported" if np.median(razao) <= 0.5 else "not supported"})
 

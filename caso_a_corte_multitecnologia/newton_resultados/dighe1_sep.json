@@ -10,7 +10,7 @@
   24,
   98.73499999999999
  ],
- "limite_s": 1800.0,
+ "limite_s": 5400.0,
  "status": "sem_prova",
  "t_c": null,
  "trilha": [
@@ -25,8 +25,8 @@
    "origem": "novo",
    "status": "sem_prova",
    "motivo": "status 1",
-   "tempo_s": 1800.0748205184937
+   "tempo_s": 5400.075548410416
   }
  ],
- "tempo_total_s": 1800.0758187770844
+ "tempo_total_s": 5400.076547622681
 }
