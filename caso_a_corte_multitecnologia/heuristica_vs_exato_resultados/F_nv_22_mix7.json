@@ -1,0 +1,56 @@
+{
+ "estudo": "F",
+ "instancia": "nv_22_mix7",
+ "n": 7,
+ "L": 1042.557785,
+ "L_segmento": 1042.557785,
+ "casos": {
+  "0.03": {
+   "t": 0.03,
+   "M": 63.70808767129999,
+   "T_P": 63.858534494458304,
+   "h": {
+    "rodada": 0,
+    "fo": 63.73151108742502,
+    "ar": 339.21759497000005,
+    "n_perf": 11,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.1": {
+   "t": 0.1,
+   "M": 64.34853449444999,
+   "T_P": 64.3485344944583,
+   "h": {
+    "rodada": 0,
+    "fo": 64.34853449444999,
+    "ar": 438.02695778,
+    "n_perf": 7,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.25": {
+   "t": 0.25,
+   "M": 65.39853449444999,
+   "T_P": 65.3985344944583,
+   "h": {
+    "rodada": 0,
+    "fo": 65.39853449444999,
+    "ar": 438.02695778,
+    "n_perf": 7,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  }
+ },
+ "orcamento_s": 153.6265058517456,
+ "tempo_s": 154.57408905029297
+}

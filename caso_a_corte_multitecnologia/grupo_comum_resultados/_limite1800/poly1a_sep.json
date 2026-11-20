@@ -1,0 +1,17 @@
+{
+ "instancia": "poly1a_sep",
+ "n": 15,
+ "R_min": 13,
+ "componentes": 13,
+ "V": 68,
+ "L": 325.0,
+ "L_P": 325.0,
+ "As_guardado": 42.0,
+ "AP": 90.0,
+ "TP0": 19.72499999999999,
+ "limite_s": 1800.0,
+ "pontos": {},
+ "status": "sem_prova_G",
+ "motivo_G": "status 1",
+ "tempo_total_s": 1800.1863026618958
+}

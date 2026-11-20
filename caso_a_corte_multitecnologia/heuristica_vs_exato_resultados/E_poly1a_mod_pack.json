@@ -1,0 +1,56 @@
+{
+ "estudo": "E",
+ "instancia": "poly1a_mod_pack",
+ "n": 15,
+ "L": 313.17868554,
+ "L_segmento": 313.17868554,
+ "casos": {
+  "0.06": {
+   "t": 0.06,
+   "M": 19.7843886112,
+   "T_P": 19.9061239743736,
+   "h": {
+    "rodada": 1,
+    "fo": 19.784388611199994,
+    "ar": 85.46699152000001,
+    "n_perf": 13,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.25": {
+   "t": 0.25,
+   "M": 22.2543886112,
+   "T_P": 22.7561239743736,
+   "h": {
+    "rodada": 1,
+    "fo": 22.25486859025,
+    "ar": 85.65898314,
+    "n_perf": 13,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "1": {
+   "t": 1.0,
+   "M": 32.0043886112,
+   "T_P": 34.0061239743736,
+   "h": {
+    "rodada": 0,
+    "fo": 32.005428432275,
+    "ar": 85.88291995,
+    "n_perf": 13,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  }
+ },
+ "orcamento_s": 176.37252378463745,
+ "tempo_s": 177.58392119407654
+}

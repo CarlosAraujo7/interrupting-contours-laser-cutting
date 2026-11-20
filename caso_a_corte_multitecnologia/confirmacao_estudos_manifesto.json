@@ -1,0 +1,13 @@
+{
+ "data": "2026-11-20 11:52:16",
+ "arquivos": {
+  "grupo_comum.py": "e3d1f21690d3fc113593d9fc5677e9a2a339089c361548321119b2ae5c04777c",
+  "confirmacao_novos.py": "97b2cd8e0d7a2a37125611508d867a6dff4327d66b8a1ca3eeb1fad5768650ec",
+  "escala_fibra_aninhados.py": "68774d0b37652a9cf508cb9b35c04986592a2a80bebcb677170eaa8873e91bd7",
+  "verificar_certificado_milp.py": "209694d765fe21f7fea5cafcda058fa189c764405f91267de46ea3f16466e066",
+  "newton_exato_tc.py": "55bcd5c6c0bf847c475cc9990bbd23ddae3e263f3a5306343dbe6e6128433e51",
+  "teto_certificado.py": "23a5d7aa217d62291e47208a3b4152bf1ffc4ba367a83201e2cc7e8af89331a2",
+  "tsh_segmento.py": "3ce73694f51712812de6cb0f0235fd89fdeadc4817fcc6fda3814f5b3471c246",
+  "..\\docs\\59_protocolo_estudos_E_F_G_cortes_comuns_layouts_novos_e_escala_de_fibra.md": "7ad1d42653ed879a1cb3b6ef1c45ac781ba318c487dc1ec1466a2259182d897c"
+ }
+}

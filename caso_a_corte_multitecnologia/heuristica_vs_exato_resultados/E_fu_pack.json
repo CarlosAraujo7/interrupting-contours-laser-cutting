@@ -1,0 +1,56 @@
+{
+ "estudo": "E",
+ "instancia": "fu_pack",
+ "n": 12,
+ "L": 410.0,
+ "L_segmento": 410.0,
+ "casos": {
+  "0.06": {
+   "t": 0.06,
+   "M": 25.0625,
+   "T_P": 28.400000000000002,
+   "h": {
+    "rodada": 1,
+    "fo": 25.062500000000007,
+    "ar": 65.0,
+    "n_perf": 5,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.25": {
+   "t": 0.25,
+   "M": 26.0125,
+   "T_P": 30.680000000000003,
+   "h": {
+    "rodada": 1,
+    "fo": 26.012500000000006,
+    "ar": 65.0,
+    "n_perf": 5,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "1": {
+   "t": 1.0,
+   "M": 29.762499999999996,
+   "T_P": 39.68000000000001,
+   "h": {
+    "rodada": 0,
+    "fo": 29.762500000000006,
+    "ar": 65.0,
+    "n_perf": 5,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  }
+ },
+ "orcamento_s": 123.28919768333435,
+ "tempo_s": 124.17699241638184
+}

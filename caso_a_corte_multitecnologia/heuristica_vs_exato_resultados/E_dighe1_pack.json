@@ -1,0 +1,56 @@
+{
+ "estudo": "E",
+ "instancia": "dighe1_pack",
+ "n": 16,
+ "L": 1556.0,
+ "L_segmento": 1556.0,
+ "casos": {
+  "0.06": {
+   "t": 0.06,
+   "M": 94.855,
+   "T_P": 100.00249999999998,
+   "h": {
+    "rodada": 0,
+    "fo": 94.85500000000003,
+    "ar": 286.0,
+    "n_perf": 13,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.25": {
+   "t": 0.25,
+   "M": 97.025,
+   "T_P": 103.04249999999999,
+   "h": {
+    "rodada": 1,
+    "fo": 97.02500000000002,
+    "ar": 366.0,
+    "n_perf": 11,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "1": {
+   "t": 1.0,
+   "M": 105.275,
+   "T_P": 115.04249999999999,
+   "h": {
+    "rodada": 0,
+    "fo": 105.275,
+    "ar": 366.0,
+    "n_perf": 11,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  }
+ },
+ "orcamento_s": 127.51267576217651,
+ "tempo_s": 129.46122550964355
+}

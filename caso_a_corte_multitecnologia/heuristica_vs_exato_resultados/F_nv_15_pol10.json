@@ -1,0 +1,56 @@
+{
+ "estudo": "F",
+ "instancia": "nv_15_pol10",
+ "n": 10,
+ "L": 1069.85665288,
+ "L_segmento": 1069.85665288,
+ "casos": {
+  "0.03": {
+   "t": 0.03,
+   "M": 65.37657292469999,
+   "T_P": 65.68946529147865,
+   "h": {
+    "rodada": 1,
+    "fo": 65.37657292469997,
+    "ar": 270.06950076,
+    "n_perf": 17,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.1": {
+   "t": 0.1,
+   "M": 66.342901717175,
+   "T_P": 66.38946529147866,
+   "h": {
+    "rodada": 1,
+    "fo": 66.34290171717498,
+    "ar": 420.60101775,
+    "n_perf": 11,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.25": {
+   "t": 0.25,
+   "M": 67.88946529149999,
+   "T_P": 67.88946529147866,
+   "h": {
+    "rodada": 1,
+    "fo": 67.88946529149999,
+    "ar": 479.22644748,
+    "n_perf": 10,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  }
+ },
+ "orcamento_s": 147.91649961471558,
+ "tempo_s": 148.6637773513794
+}

@@ -1,0 +1,12 @@
+{
+ "data": "2026-11-20 12:04:44",
+ "arquivos": {
+  "heuristica_vs_exato.py": "a21b2c4a9af1af3b387981aa2be997e62f5baa561d98927612ed1428b1ea0099",
+  "escala_fibra_aninhados.py": "68774d0b37652a9cf508cb9b35c04986592a2a80bebcb677170eaa8873e91bd7",
+  "segmento_gtsp.py": "c05afffa48356ac107ac204cd51dc5f577422d9301a99085aaf10ea2150201c3",
+  "caminho_honesto.py": "e2469fb46368e7307e92f42a2892a682f93d417e7368ed8ef0a68a9c69782067",
+  "confirmacao_novos.py": "97b2cd8e0d7a2a37125611508d867a6dff4327d66b8a1ca3eeb1fad5768650ec",
+  "grupo_comum.py": "e3d1f21690d3fc113593d9fc5677e9a2a339089c361548321119b2ae5c04777c",
+  "..\\docs\\60_protocolo_estudo_H_pcglns_de_arcos_contra_o_otimo_exato.md": "07259bc8f46d42851a05d1052c99b5e5f91d7b405232490618f8541216c26b1f"
+ }
+}

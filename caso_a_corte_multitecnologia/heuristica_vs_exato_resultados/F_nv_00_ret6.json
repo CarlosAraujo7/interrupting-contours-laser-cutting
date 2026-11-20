@@ -1,0 +1,56 @@
+{
+ "estudo": "F",
+ "instancia": "nv_00_ret6",
+ "n": 6,
+ "L": 748.5736263800001,
+ "L_segmento": 748.5736263800001,
+ "casos": {
+  "0.03": {
+   "t": 0.03,
+   "M": 45.77643674745,
+   "T_P": 45.95694837073389,
+   "h": {
+    "rodada": 1,
+    "fo": 45.77643674744999,
+    "ar": 224.80766585999996,
+    "n_perf": 10,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.1": {
+   "t": 0.1,
+   "M": 46.30731639335,
+   "T_P": 46.37694837073389,
+   "h": {
+    "rodada": 0,
+    "fo": 46.30731639334999,
+    "ar": 277.15952422,
+    "n_perf": 7,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.25": {
+   "t": 0.25,
+   "M": 47.27694837075,
+   "T_P": 47.27694837073389,
+   "h": {
+    "rodada": 1,
+    "fo": 47.276948370749984,
+    "ar": 345.01231518,
+    "n_perf": 6,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  }
+ },
+ "orcamento_s": 146.7306444644928,
+ "tempo_s": 147.04348611831665
+}

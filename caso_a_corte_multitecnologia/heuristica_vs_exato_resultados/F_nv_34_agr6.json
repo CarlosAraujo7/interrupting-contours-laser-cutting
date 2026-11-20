@@ -1,0 +1,56 @@
+{
+ "estudo": "F",
+ "instancia": "nv_34_agr6",
+ "n": 6,
+ "L": 705.52026584,
+ "L_segmento": 705.52026584,
+ "casos": {
+  "0.03": {
+   "t": 0.03,
+   "M": 43.21731724372499,
+   "T_P": 43.379820919860265,
+   "h": {
+    "rodada": 0,
+    "fo": 43.221175203925,
+    "ar": 271.98370141,
+    "n_perf": 7,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.1": {
+   "t": 0.1,
+   "M": 43.707317243724994,
+   "T_P": 43.79982091986027,
+   "h": {
+    "rodada": 0,
+    "fo": 43.711175203925,
+    "ar": 271.98370141,
+    "n_perf": 7,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.25": {
+   "t": 0.25,
+   "M": 44.69982091984999,
+   "T_P": 44.699820919860265,
+   "h": {
+    "rodada": 0,
+    "fo": 44.70939329774999,
+    "ar": 351.27093894,
+    "n_perf": 6,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  }
+ },
+ "orcamento_s": 168.62012839317322,
+ "tempo_s": 169.2721872329712
+}

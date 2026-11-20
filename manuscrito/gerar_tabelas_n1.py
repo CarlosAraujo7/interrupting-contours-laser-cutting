@@ -1085,6 +1085,269 @@ def tabela_orcamento():
         "alguma previsao do teste de orcamento (docs/55) nao foi sustentada: reescreva a secao D.4 e a frase da secao 6.7, que dizem 'sustentadas'"      # o texto afirma que todas foram sustentadas
 
 
+def _verdito(b):
+    return "supported" if b else "not supported"
+
+
+def _limites_frase(R):
+    """Frase dos limites de tempo por programa usados (um so, ou o primeiro estendido para os layouts que o alcancaram; docs/59_desvios D7)."""
+    lims = sorted({r["limite_s"] for r in R})
+    s = f"a limit of {lims[0]:.0f}" + r"\,s per programme"
+    for i, L_ in enumerate(lims[1:]):
+        n_i = sum(1 for r in R if r["limite_s"] >= L_)
+        suj = "the one layout" if n_i == 1 else f"the {n_i} layouts"
+        s += (", extended to " if i == 0 else " and to ") + f"{L_:.0f}" + r"\,s in " + suj + (" that reached it" if i == 0 else " that reached that")
+    return s
+
+
+def macros_cortes_comuns():
+    """Estudo E (docs/59): linha-base de nivel de contorno com cortes comuns, certificado e ponto de equilibrio generalizados (Proposicao 'cc'). So le `grupo_comum_resultados/`."""
+    fs = sorted(glob.glob(os.path.join(A, "grupo_comum_resultados", "*.json")))
+    if not fs:
+        return
+    R = [json.load(open(f)) for f in fs]
+    ex = [r for r in R if r["status"] == "exato"]
+    MACROS.update({"gcN": str(len(R)), "gcExact": str(len(ex)), "gcNoProof": str(len(R) - len(ex)), "gcVMax": str(max(r["V"] for r in R)), "gcLimSent": _limites_frase(R)})
+    if not ex:
+        return
+    pc = lambda r, k, c: (100.0 * r["pontos"][k][c] / r["pontos"][k]["T_P"]) if k in r["pontos"] and c in r["pontos"][k] else None
+    tc = [r["t_c"] for r in ex]
+    rho = [r["t_c"] * VA * r["R_min"] / r["L"] for r in ex]
+    razao = [r["t_c"] / r["t_cert"] for r in ex if r["t_cert"] > 0]
+    sgz = [pc(r, "0", "S_G") for r in ex]
+    scc1 = [pc(r, "1", "S_cc") for r in ex if pc(r, "1", "S_cc") is not None]
+    st1 = [pc(r, "1", "S_total") for r in ex if pc(r, "1", "S_total") is not None]
+    sga = [pc(r, "0.25", "S_G") for r in ex if pc(r, "0.25", "S_G") is not None]
+    sgc = [pc(r, "1", "S_G") for r in ex if pc(r, "1", "S_G") is not None]
+    sccz = [pc(r, "0", "S_cc") for r in ex if pc(r, "0", "S_cc") is not None]
+    saved = [r["n"] - r["R_min"] for r in R]
+    MACROS.update({"gcSavedMin": str(min(saved)), "gcSavedMax": str(max(saved)),
+                   "gcTcMed": f"{np.median(tc):.3f}", "gcTcMin": f"{min(tc):.3f}", "gcTcMax": f"{max(tc):.3f}",
+                   "gcRhoMed": f"{np.median(rho):.2f}", "gcRhoMin": f"{min(rho):.2f}", "gcRhoMax": f"{max(rho):.2f}",
+                   "gcRatioMed": f"{np.median(razao):.2f}", "gcRatioMax": f"{max(razao):.2f}",
+                   "gcSgZMed": fmt(float(np.median(sgz)), 2, sinal=False), "gcSgZMax": fmt(max(sgz), 2, sinal=False), "gcSgZMin": fmt(min(sgz), 2, sinal=False),
+                   "gcSccZMed": fmt(float(np.median(sccz)), 2, sinal=False), "gcSccZMax": fmt(max(sccz), 1, sinal=False), "gcSccZMin": fmt(min(sccz), 2, sinal=False),
+                   "gcSgANil": str(sum(1 for x in sga if x <= 1e-5)), "gcSgAN": str(len(sga)), "gcSgCNil": str(sum(1 for x in sgc if x <= 1e-5)), "gcSgCN": str(len(sgc)),
+                   "gcSccCMed": fmt(float(np.median(scc1)), 1, sinal=False), "gcSccCMin": fmt(min(scc1), 1, sinal=False), "gcSccCMax": fmt(max(scc1), 1, sinal=False),
+                   "gcEone": _verdito(bool(sga) and all(x <= 1e-5 for x in sga)),
+                   "gcEtwo": _verdito(max(tc) <= 0.2 and 0.2 <= float(np.median(rho)) <= 0.8),
+                   "gcEthree": _verdito(bool(sgc) and all(pc(r, "1", "S_G") <= 1e-5 and abs(r["pontos"]["1"]["S_total"] - r["pontos"]["1"]["S_cc"]) <= 1e-6 * r["pontos"]["1"]["T_P"] for r in ex if "S_G" in r["pontos"].get("1", {}))),
+                   "gcEfour": _verdito(bool(scc1) and all(x > 0 for x in scc1))})
+
+
+def tabela_cortes_comuns():
+    """Tabela por layout do estudo E (`grupo_comum_resultados/`; pre-especificado em docs/59)."""
+    fs = sorted(glob.glob(os.path.join(A, "grupo_comum_resultados", "*.json")))
+    if not fs:
+        return
+    R = sorted((json.load(open(f)) for f in fs), key=lambda r: r["V"])
+    pc = lambda r, k, c: (100.0 * r["pontos"][k][c] / r["pontos"][k]["T_P"]) if k in r["pontos"] and c in r["pontos"][k] else None
+    f1 = lambda x, d=2: "--" if x is None else f"{x:.{d}f}"
+    Tx = [r"\begin{table}[t]", r"\centering\footnotesize",
+          r"\caption{Layouts whose contours touch or share edges: the common-cut plan $G$ and the exact saving of interrupted routing over it (Study~E, pre-specified; layouts without holes, origin outside the contours, at most 70 vertices). $n$: contours; $R_{\min}$: minimum number of runs; $A_P^\ast$, $A_G^\ast$, $A^\ast$: air length (drawing units) of the contour-level optimum, of the common-cut plan and of the rural postman optimum; $t^G_{\mathrm{cert}}=(A_G^\ast-A^\ast)/v_a$ and $t_c^G$: certificate and exact break-even over $G$ (Proposition~\ref{prop:cc}); $\rho_G=t_c^G v_a R_{\min}/L$; $S_{cc}(1)$: gain of cutting common edges once and chaining touching contours over the contour-level reference at $t=1$\,s, as a share of its time; $S_G(0)$: gain of interrupted routing over $G$ at $t=0$, as a share of the same time." + (r" A dash: the exact programme did not finish within the limit." if any(r_["status"] != "exato" for r_ in R) else "") + "}",
+          r"\label{tab:n1_cc}", r"\begin{tabular}{lrrrrrrrrrr}", r"\toprule",
+          r"Layout & $n$ & $R_{\min}$ & $A_P^\ast$ & $A_G^\ast$ & $A^\ast$ & $t^G_{\mathrm{cert}}$ & $t_c^G$ & $\rho_G$ & $S_{cc}(1)$ (\%) & $S_G(0)$ (\%) \\", r"\midrule"]
+    for r in R:
+        nome = r["instancia"].replace("_", r"\_")
+        ok = r["status"] == "exato"
+        rho = r["t_c"] * VA * r["R_min"] / r["L"] if ok else None
+        Tx.append("\\texttt{" + nome + "} & " + f"{r['n']} & {r['R_min']} & {r['AP']:.1f} & {f1(r.get('AG'), 1)} & {f1(r.get('As'), 1)} & {f1(r.get('t_cert'), 3)} & {f1(r['t_c'] if ok else None, 3)} & {f1(rho)} & "
+                  f"{f1(pc(r, '1', 'S_cc'), 1)} & {f1(pc(r, '0', 'S_G'))} " + r"\\")
+    Tx += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    open(os.path.join(TAB, "n1_cortes_comuns.tex"), "w", encoding="utf-8").write("\n".join(Tx) + "\n")
+
+
+def macros_novos():
+    """Estudo F (docs/59): validacao confirmatoria em layouts novos. So le `confirmacao_novos_resultados/`."""
+    fs = sorted(glob.glob(os.path.join(A, "confirmacao_novos_resultados", "*.json")))
+    if not fs:
+        return
+    R = [json.load(open(f)) for f in fs]
+    ex = [r for r in R if r["status"] == "exato"]
+    MACROS.update({"nlN": str(len(R)), "nlExact": str(len(ex)), "nlNoProof": str(len(R) - len(ex)), "nlVMin": str(min(r["V"] for r in R)), "nlVMax": str(max(r["V"] for r in R)),
+                   "nlNMin": str(min(r["n"] for r in R)), "nlNMax": str(max(r["n"] for r in R)), "nlLimSent": _limites_frase(R)})
+    if not ex:
+        return
+    pc = lambda r, k: (100.0 * r["pontos"][k]["S"] / (r["P0"] + r["pontos"][k]["t"] * r["n"])) if k in r["pontos"] and "S" in r["pontos"][k] else None
+    s0, s03, s01, s025 = ([pc(r, k) for r in ex if pc(r, k) is not None] for k in ("0", "0.03", "0.1", "0.25"))
+    tc = [r["t_c"] for r in ex]
+    rho = [r["t_c"] * VA * r["n"] / r["L"] for r in ex]
+    razao = [r["t_c"] / r["t_cert"] for r in ex if r["t_cert"] > 0]
+    cert = [r["t_cert"] for r in ex]
+    med0, med03 = float(np.median(s0)), float(np.median(s03))
+    MACROS.update({"nlSZMed": fmt(med0, 2, sinal=False), "nlSZMax": fmt(max(s0), 2, sinal=False), "nlSZMin": fmt(min(s0), 2, sinal=False), "nlSVMed": fmt(med03, 2, sinal=False),
+                   "nlSWMed": fmt(float(np.median(s01)), 2, sinal=False), "nlSANil": str(sum(1 for x in s025 if x <= 1e-5)), "nlSAN": str(len(s025)), "nlSVN": str(len(s03)),
+                   "nlTcMed": f"{np.median(tc):.3f}", "nlTcMin": f"{min(tc):.3f}", "nlTcMax": f"{max(tc):.3f}", "nlRhoMed": f"{np.median(rho):.2f}", "nlRhoMin": f"{min(rho):.2f}", "nlRhoMax": f"{max(rho):.2f}",
+                   "nlRatioMed": f"{np.median(razao):.2f}", "nlRatioMax": f"{max(razao):.2f}", "nlCertMed": f"{np.median(cert):.2f}", "nlCertMin": f"{min(cert):.2f}", "nlCertMax": f"{max(cert):.2f}",
+                   "nlRatioVZ": f"{med03 / med0:.2f}"})
+    if len(ex) >= 30:
+        MACROS.update({"nlFone": _verdito(med0 <= 1.0 and max(s0) <= 2.0), "nlFtwo": _verdito(sum(1 for x in s025 if x <= 1e-5) >= 0.9 * len(s025)),
+                       "nlFthree": _verdito(0.25 <= float(np.median(rho)) <= 0.75 and sum(1 for x in rho if 0.15 <= x <= 1.0) >= 0.8 * len(rho)),
+                       "nlFfour": _verdito(float(np.median(razao)) <= 0.6 and sum(1 for x in razao if x <= 0.9) >= 0.8 * len(razao)), "nlFfive": _verdito(0.5 <= med03 / med0 <= 0.9)})
+    # confirmacao independente do ponto de equilibrio (docs/59_desvios D2)
+    cp = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(A, "confirmacao_pe_resultados", "*.json")))]
+    if cp:
+        for e, pre in (("E", "gc"), ("F", "nl")):
+            x = [r for r in cp if r["estudo"] == e]
+            MACROS.update({pre + "ChkN": str(len(x)), pre + "ChkOk": str(sum(1 for r in x if r["ok"]))})
+
+
+def tabela_novos():
+    """Tabelas do estudo F: resumo por familia (texto principal) e por layout (apendice)."""
+    fs = sorted(glob.glob(os.path.join(A, "confirmacao_novos_resultados", "*.json")))
+    if not fs:
+        return
+    R = [json.load(open(f)) for f in fs]
+    pc = lambda r, k: (100.0 * r["pontos"][k]["S"] / (r["P0"] + r["pontos"][k]["t"] * r["n"])) if k in r["pontos"] and "S" in r["pontos"][k] else None
+    f1 = lambda x, d=2: "--" if x is None else f"{x:.{d}f}"
+    nomes = {"ret": "Rectangles", "pol": "Convex polygons", "mix": "Mixed shapes", "agr": "Mixed, clustered"}
+    Tx = [r"\begin{table}[t]", r"\centering\footnotesize",
+          r"\caption{Confirmation on new layouts (Study~F, pre-specified; medians over the layouts whose exact break-even was found). $S(0)$ and $S(0.25)$: largest saving of any plan over the contour-level optimum at $t=0$ and $0.25$\,s, as a share of the total time; $t_c$: exact break-even restart cost; $\rho_c=t_c v_a n/L$; $t_{\mathrm{cert}}$: certificate of Proposition~\ref{prop:cert}. The last column counts the layouts with $S(0.25)=0$.}",
+          r"\label{tab:n1_novos}", r"\begin{tabular}{lrrrrrrrr}", r"\toprule",
+          r"Family & Layouts & Exact & $S(0)$ (\%) & $t_c$ (s) & $\rho_c$ & $t_c/t_{\mathrm{cert}}$ & $S(0.25)=0$ \\", r"\midrule"]
+    for fam in list(nomes) + ["todas"]:
+        G = [r for r in R if fam == "todas" or r["familia"] == fam]
+        E = [r for r in G if r["status"] == "exato"]
+        if not E:
+            continue
+        s25 = [pc(r, "0.25") for r in E if pc(r, "0.25") is not None]
+        Tx.append(f"{nomes.get(fam, 'All')} & {len(G)} & {len(E)} & {np.median([pc(r, '0') for r in E]):.2f} & {np.median([r['t_c'] for r in E]):.3f} & {np.median([r['t_c'] * VA * r['n'] / r['L'] for r in E]):.2f} & "
+                  f"{np.median([r['t_c'] / r['t_cert'] for r in E]):.2f} & {sum(1 for x in s25 if x <= 1e-5)}/{len(s25)} " + r"\\")
+        if fam == "agr":
+            Tx.append(r"\midrule")
+    Tx += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    open(os.path.join(TAB, "n1_novos.tex"), "w", encoding="utf-8").write("\n".join(Tx) + "\n")
+    D = [r"\begin{table}[t]", r"\centering\scriptsize",
+         r"\caption{All the new layouts of Study~F, with the generator seed in the name. $V$: vertices; $S(0)$, $S(0.03)$, $S(0.1)$, $S(0.25)$: largest saving of any plan over the contour-level optimum, as a share of the total time at each restart cost (\%); $t_c$ and $t_{\mathrm{cert}}$ in seconds; a dash: the exact programme did not finish within the limit.}",
+         r"\label{tab:n1_novos_det}", r"\begin{tabular}{lrrrrrrrrrr}", r"\toprule", r"Layout & $n$ & $V$ & $S(0)$ & $S(0.03)$ & $S(0.1)$ & $S(0.25)$ & $t_{\mathrm{cert}}$ & $t_c$ & $\rho_c$ & $t_c/t_{\mathrm{cert}}$ \\", r"\midrule"]
+    for r in R:
+        ok = r["status"] == "exato"
+        D.append("\\texttt{" + r["instancia"].replace("_", r"\_") + "} & " + f"{r['n']} & {r['V']} & {f1(pc(r, '0'))} & {f1(pc(r, '0.03'))} & {f1(pc(r, '0.1'))} & {f1(pc(r, '0.25'), 3)} & {f1(r.get('t_cert'), 3)} & "
+                 f"{f1(r['t_c'] if ok else None, 3)} & {f1(r['t_c'] * VA * r['n'] / r['L'] if ok else None)} & {f1(r['t_c'] / r['t_cert'] if ok and r['t_cert'] else None)} " + r"\\")
+    D += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    open(os.path.join(TAB, "n1_novos_det.tex"), "w", encoding="utf-8").write("\n".join(D) + "\n")
+
+
+def _casos_gap():
+    import heuristica_vs_exato as hv
+    R = hv.carregar()
+    casos = [(r, t, c, hv.metricas(c, r["L_segmento"])) for r in R for t, c in r["casos"].items()]
+    return R, [x for x in casos if x[3]], hv
+
+
+def macros_gap():
+    """Estudo H (docs/60): distancia do PCGLNS de arcos ao otimo exato com custo de reinicio. So le `heuristica_vs_exato_resultados/`."""
+    R, casos, hv = _casos_gap()
+    if not casos:
+        return
+    ex = [m["excesso"] for *_, m in casos]
+    lac = [m["lacuna"] for *_, m in casos]
+    cap = [m["captura"] for *_, m in casos if m["captura"] is not None]
+    MACROS.update({"hvLay": str(len(R)), "hvN": str(len(casos)), "hvMed": fmt(float(np.median(ex)), 2, sinal=False), "hvMax": fmt(max(ex), 2, sinal=False),
+                   "hvWfive": str(sum(1 for x in ex if x <= 5.0)), "hvWfivePct": f"{100.0 * sum(1 for x in ex if x <= 5.0) / len(ex):.0f}\\%",
+                   "hvOpt": str(sum(1 for x in ex if x <= 1e-6)), "hvOptPct": f"{100.0 * sum(1 for x in ex if x <= 1e-6) / len(ex):.0f}\\%",
+                   "hvGapMed": fmt(float(np.median(lac)), 3, sinal=False), "hvGapMax": fmt(max(lac), 3, sinal=False),
+                   "hvCapN": str(len(cap)), "hvCapMed": f"{float(np.median(cap)):.2f}" if cap else "--", "hvCapMin": f"{min(cap):.2f}" if cap else "--"})
+    if len(casos) >= hv.MIN_CASOS:
+        MACROS.update({"hvHone": _verdito(float(np.median(ex)) <= 2.0 and max(ex) <= 15.0), "hvHtwo": _verdito(sum(1 for x in ex if x <= 5.0) >= 0.8 * len(ex)),
+                       "hvHthree": _verdito(sum(1 for x in ex if x <= 1e-6) >= 0.3 * len(ex)), "hvHfour": _verdito(bool(cap) and float(np.median(cap)) >= 0.9)})
+
+
+def tabela_gap():
+    """Tabela do estudo H por estudo de origem (E: cortes comuns; F: layouts novos) e restart cost."""
+    R, casos, hv = _casos_gap()
+    if not casos:
+        return
+    nome = {"E": "Common-cut layouts", "F": "New layouts"}
+    Tx = [r"\begin{table}[t]", r"\centering\footnotesize",
+          r"\caption{Distance of the arc-based solver (PCGLNS, the method and budgets of the confirmatory set) to the exact optimum with restart cost (Study~H, pre-specified). A case is a layout and a restart cost $t$ at which the exact optimum is known. Excess: $(\mathrm{NC}_h-\mathrm{NC}^\ast)/\mathrm{NC}^\ast$, with NC the non-cutting time (air moves and restarts) of the verified solution and of the exact optimum; capture: share of the exact saving over the contour-level optimum that the solution captures, in the cases where that saving exceeds 0.1\% of the total time.}",
+          r"\label{tab:n1_gap}", r"\begin{tabular}{lrrrrrr}", r"\toprule", r"Layouts & $t$ (s) & Cases & Excess median (\%) & Excess max (\%) & At the optimum & Capture median \\", r"\midrule"]
+    for est in ("E", "F"):
+        ts = sorted({t for r, t, _, _ in casos if r["estudo"] == est}, key=float)
+        for i, t in enumerate(ts):
+            X = [m for r, tt, _, m in casos if r["estudo"] == est and tt == t]
+            cap = [m["captura"] for m in X if m["captura"] is not None]
+            Tx.append((nome[est] if i == 0 else "") + f" & {t} & {len(X)} & {np.median([m['excesso'] for m in X]):.3f} & {max(m['excesso'] for m in X):.3f} & {sum(1 for m in X if m['excesso'] <= 1e-6)} & " + (f"{np.median(cap):.2f}" if cap else "--") + r" \\")
+        Tx.append(r"\midrule")
+    Tx[-1] = r"\bottomrule"
+    Tx += [r"\end{tabular}", r"\end{table}"]
+    open(os.path.join(TAB, "n1_gap.tex"), "w", encoding="utf-8").write("\n".join(Tx) + "\n")
+
+
+def _fibra():
+    import escala_fibra_aninhados as fb
+    fb.VC_F.setdefault(60, 60.0 * 1000.0 / 60.0)                    # extensao POS HOC (nao esta no codigo congelado): 60 m/min, velocidade de corte alta de chapa fina (Wetzig et al. 2019: > 100 m/min em corte reto)
+    return fb
+
+
+def macros_fibra():
+    """Estudo G (docs/59): layouts reais aninhados e densos em escala de maquina de fibra. So le `fibra_aninhados_resultados/`."""
+    fb = _fibra()
+    g1, g2 = fb.carregar()
+    if not g1 and not g2:
+        return
+    MACROS.update({"fbN": str(len(g1)), "fbNdense": str(len(g2)) if g2 else "0"})
+    f2 = lambda x: fmt(x, 2, sinal=False)
+    f3 = lambda x: fmt(x, 3, sinal=False)
+    suf = {"0": "Z", "0.06": "S", "0.25": "A", "1": "C"}
+    if g1 and all(all(k in r["seg"] and r["seg"][k] for k in suf) for r in g1):
+        for vc_m, tag in ((15, ""), (30, "Th"), (60, "Sx")):
+            for t_pp, s in suf.items():
+                es = [fb.economia(r, t_pp, vc_m) for r in g1]
+                MACROS.update({f"fbMed{tag}{s}": f3(float(np.median([e[0] for e in es]))), f"fbMax{tag}{s}": f3(max(e[0] for e in es))})
+                if vc_m == 15:
+                    nc = [e[1] for e in es if e[1] is not None]
+                    MACROS.update({f"fbNc{s}": f2(float(np.median(nc))), f"fbAir{s}": f2(float(np.median([e[2] for e in es]))), f"fbRuns{s}": f"{np.median([r['seg'][t_pp]['n_perf'] for r in g1]):.0f}",
+                                   f"fbPos{s}": f"{sum(1 for e in es if e[0] > 0.01)}"})
+        MACROS.update({"fbTpS": f"{0.06 * fb.VA / fb.VA_F * 1000:.1f}", "fbTpA": f"{0.25 * fb.VA / fb.VA_F * 1000:.1f}", "fbTpC": f"{1.0 * fb.VA / fb.VA_F * 1000:.0f}",
+                       "fbNcont": f"{np.median([r['n_contornos'] for r in g1]):.0f}"})
+        med = lambda t: float(np.median([fb.economia(r, t, 15)[0] for r in g1]))
+        m0, m06, m25, m1 = med("0"), med("0.06"), med("0.25"), med("1")
+        tot06 = [fb.economia(r, "0.06", 15)[0] for r in g1]
+        corr = sum(1 for r in g1 if r["seg"]["0.06"]["n_perf"] >= r["seg"]["0.25"]["n_perf"] >= r["seg"]["1"]["n_perf"])
+        MACROS.update({"fbGone": _verdito(m0 + 1e-4 >= m06 and m06 + 1e-4 >= m25 and m25 + 1e-4 >= m1), "fbGtwo": _verdito(float(np.median(tot06)) <= 1.0 and max(tot06) <= 3.0),
+                       "fbGthree": _verdito(m25 <= 0.1 and m1 <= 0.1), "fbGfour": _verdito(sum(1 for x in tot06 if x > 0.01) >= 0.5 * len(tot06)), "fbGfive": _verdito(corr >= 0.8 * len(g1)), "fbRunsOk": str(corr)})
+    if g2 and all(all(k in r["seg"] and r["seg"][k] for k in suf) for r in g2):
+        for t_pp, s in suf.items():
+            es = [fb.economia(r, t_pp, 15) for r in g2]
+            MACROS.update({f"fbDenMed{s}": f3(float(np.median([e[0] for e in es]))), f"fbDenMax{s}": f3(max(e[0] for e in es)), f"fbDenAir{s}": f2(float(np.median([e[2] for e in es]))),
+                           f"fbDenNc{s}": f2(float(np.median([e[1] for e in es if e[1] is not None])))})
+        e06 = [fb.economia(r, "0.06", 15)[0] for r in g2]
+        ar06 = [fb.economia(r, "0.06", 15)[2] for r in g2]
+        ar_g1 = float(np.median([fb.economia(r, "0.06", 15)[2] for r in g1])) if g1 else None
+        if ar_g1 is not None:
+            MACROS.update({"fbGsix": _verdito(max(e06) <= 0.2 and float(np.median(ar06)) >= 3 * ar_g1), "fbDenAirRatio": f"{float(np.median(ar06)) / ar_g1:.1f}"})
+        perim = float(np.median([r["L_pecas"] / r["n_contornos"] for r in g2]))
+        flight = 0.06 * fb.VA                                                  # distancia de voo de um reinicio em t'' = 0,06 s = t' v_a' (em unidades de desenho = mm)
+        MACROS.update({"fbDenPerim": f"{perim:.0f}", "fbDenCont": f"{np.median([r['n_contornos'] for r in g2]):.0f}", "fbFlightS": f"{flight:.0f}", "fbDenRhoS": f"{flight / perim:.2f}"})
+
+
+def tabela_fibra():
+    """Tabela do estudo G (escala de fibra): reais e densos, 15 m/min de corte e 140 m/min de ar."""
+    fb = _fibra()
+    g1, g2 = fb.carregar()
+    suf = ("0", "0.06", "0.25", "1")
+    if not g1 or not all(all(k in r["seg"] and r["seg"][k] for k in suf) for r in g1):
+        return
+    f = lambda x, d=3: f"{x:.{d}f}"
+    Tx = [r"\begin{table}[t]", r"\centering\footnotesize",
+          r"\caption{Fibre-machine scale (Study~G, pre-specified; assumed cutting speed 15\,m/min and air speed 140\,m/min, one drawing unit per millimetre). Each route is solved at the restart cost $t''$ of the benchmark and evaluated at $t'=t''\,v_a/v_a'$, which is the restart-aware route of that machine. Saving: share of the total time of the contour-level reference (charged only the runs of the route) that the route saves; non-cutting: the same share of the air and restart time; air: share of the total time that the air moves of the contour-level reference take. Medians over the layouts; maximum in parentheses.}",
+          r"\label{tab:n1_fibra}", r"\begin{tabular}{rrrrrrr}", r"\toprule",
+          r"Layouts & $t''$ (s) & $t'$ (ms) & Saving (\%) & Non-cutting (\%) & Air (\%) & Runs \\", r"\midrule"]
+    for nome, G in ((f"Real nested ({len(g1)})", g1), (f"Dense ({len(g2)})", g2)):
+        if not G or not all(all(k in r["seg"] and r["seg"][k] for k in suf) for r in G):
+            continue
+        for i, t_pp in enumerate(suf):
+            es = [fb.economia(r, t_pp, 15) for r in G]
+            nc = [e[1] for e in es if e[1] is not None]
+            Tx.append((nome if i == 0 else "") + f" & {t_pp} & {float(t_pp) * fb.VA / fb.VA_F * 1000:.1f} & {f(float(np.median([e[0] for e in es])))} ({f(max(e[0] for e in es))}) & {float(np.median(nc)):.2f} & "
+                      f"{float(np.median([e[2] for e in es])):.2f} & {np.median([r['seg'][t_pp]['n_perf'] for r in G]):.0f} " + r"\\")
+        Tx.append(r"\midrule")
+    Tx[-1] = r"\bottomrule"
+    Tx += [r"\end{tabular}", r"\end{table}"]
+    open(os.path.join(TAB, "n1_fibra.tex"), "w", encoding="utf-8").write("\n".join(Tx) + "\n")
+
+
 def tabela_tamanho(L):
     """Tamanho do layout (numero de contornos) nas 282 sinteticas (item 5 de docs/48; EXPLORATORIO, POS-HOC): parcela de voo, ganho da heuristica a t = 0 e ponto de equilibrio, so de valores guardados."""
     from scipy import stats
@@ -1198,6 +1461,14 @@ def main():
     tabela_newton()
     macros_causa()
     tabela_orcamento()
+    macros_cortes_comuns()
+    tabela_cortes_comuns()
+    macros_novos()
+    tabela_novos()
+    macros_gap()
+    tabela_gap()
+    macros_fibra()
+    tabela_fibra()
     tabela_tamanho(L)
     macros_familias(L)
     macros_repositorio_publico()

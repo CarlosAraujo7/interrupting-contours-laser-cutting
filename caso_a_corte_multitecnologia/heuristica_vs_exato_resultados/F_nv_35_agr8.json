@@ -1,0 +1,56 @@
+{
+ "estudo": "F",
+ "instancia": "nv_35_agr8",
+ "n": 8,
+ "L": 885.0470042100001,
+ "L_segmento": 885.0470042100001,
+ "casos": {
+  "0.03": {
+   "t": 0.03,
+   "M": 54.37494792565,
+   "T_P": 54.38286032223515,
+   "h": {
+    "rodada": 0,
+    "fo": 54.37784500544999,
+    "ar": 402.00990113999995,
+    "n_perf": 9,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.1": {
+   "t": 0.1,
+   "M": 54.942860322224995,
+   "T_P": 54.94286032223515,
+   "h": {
+    "rodada": 0,
+    "fo": 54.94286032222497,
+    "ar": 416.01602785,
+    "n_perf": 8,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  },
+  "0.25": {
+   "t": 0.25,
+   "M": 56.142860322225,
+   "T_P": 56.14286032223515,
+   "h": {
+    "rodada": 0,
+    "fo": 56.142860322225,
+    "ar": 416.01602785,
+    "n_perf": 8,
+    "contiguo": true,
+    "geo_ok": true,
+    "viol_fechamento": 0,
+    "viol_estrita": 0
+   }
+  }
+ },
+ "orcamento_s": 157.67736315727234,
+ "tempo_s": 158.553462266922
+}

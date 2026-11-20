@@ -211,5 +211,136 @@ if glob.glob(os.path.join(SL, "orc_*.json")):
         if not ok:
             FALHAS.append("bgOkAll")
 
+# ------------------------------------------------------------------------------------------- E. estudos E, F e G (docs/59): cortes comuns, layouts novos, escala de fibra
+import statistics as st
+
+print("E1. cortes comuns (grupo_comum_resultados)")
+RE = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(AQUI, "grupo_comum_resultados", "*.json")))]
+if RE:
+    exE = []
+    for r in RE:
+        assert abs(r["TP0"] - (r["L_P"] / VC + r["AP"] / VA)) <= 1e-9 * r["TP0"], "T_P(0) guardado difere de L_P/v_c + A_P/v_a"
+        if r["status"] != "exato":
+            continue
+        cG = r["L"] / VC + r["AG"] / VA
+        assert abs(cG - r["cG"]) <= 1e-9 * cG
+        tc = r["t_c"]
+        if r["trilha"]:
+            ant = r["trilha"][-2] if len(r["trilha"]) > 1 else r["trilha"][0]
+            assert abs((cG - ant["c"]) / (ant["R"] - r["R_min"]) - tc) <= 1e-9, "t_c^G nao e a raiz da reta do plano anterior"
+        pts = {}
+        for k, p in r["pontos"].items():
+            if "M" in p:
+                TP = r["TP0"] + p["t"] * r["n"]
+                assert abs(p["T_P"] - TP) <= 1e-9 * TP
+                pts[k] = dict(SG=100 * ((cG + p["t"] * r["R_min"]) - p["M"]) / TP, Scc=100 * (TP - (cG + p["t"] * r["R_min"])) / TP, St=100 * (TP - p["M"]) / TP)
+        exE.append(dict(tc=tc, rho=tc * VA * r["R_min"] / r["L"], razao=tc / ((r["AG"] - r["As"]) / VA) if r["AG"] > r["As"] else None, pts=pts))
+    confere("gcN", len(RE), 0)
+    confere("gcExact", len(exE), 0)
+    confere("gcNoProof", len(RE) - len(exE), 0)
+    if exE:
+        confere("gcTcMed", st.median(x["tc"] for x in exE), 3)
+        confere("gcTcMax", max(x["tc"] for x in exE), 3)
+        confere("gcRhoMed", st.median(x["rho"] for x in exE))
+        confere("gcRhoMax", max(x["rho"] for x in exE))
+        confere("gcRatioMed", st.median(x["razao"] for x in exE if x["razao"] is not None))
+        confere("gcSgZMed", st.median(x["pts"]["0"]["SG"] for x in exE))
+        confere("gcSgZMax", max(x["pts"]["0"]["SG"] for x in exE))
+        confere("gcSccCMed", st.median(x["pts"]["1"]["Scc"] for x in exE if "1" in x["pts"]), 1)
+        confere("gcSccCMin", min(x["pts"]["1"]["Scc"] for x in exE if "1" in x["pts"]), 1)
+        confere("gcSccCMax", max(x["pts"]["1"]["Scc"] for x in exE if "1" in x["pts"]), 1)
+        confere("gcSccZMed", st.median(x["pts"]["0"]["Scc"] for x in exE), 1)
+        confere("gcSgANil", sum(1 for x in exE if "0.25" in x["pts"] and x["pts"]["0.25"]["SG"] <= 1e-5), 0)
+        # decomposicao: S_total = S_cc + S_G em cada ponto
+        assert all(abs(p["St"] - (p["Scc"] + p["SG"])) <= 1e-9 for x in exE for p in x["pts"].values()), "a decomposicao nao fecha"
+print("E2. layouts novos (confirmacao_novos_resultados)")
+RF = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(AQUI, "confirmacao_novos_resultados", "*.json")))]
+if RF:
+    exF = []
+    for r in RF:
+        if r["status"] != "exato":
+            continue
+        P0 = r["L"] / VC + r["AP"] / VA
+        assert abs(P0 - r["P0"]) <= 1e-9 * P0
+        tc = r["t_c"]
+        S = {k: 100 * (P0 + p["t"] * r["n"] - p["M"]) / (P0 + p["t"] * r["n"]) for k, p in r["pontos"].items() if "M" in p}
+        if r["trilha"]:
+            ant = r["trilha"][-2] if len(r["trilha"]) > 1 else r["trilha"][0]
+            assert abs((P0 - ant["c"]) / (ant["R"] - r["n"]) - tc) <= 1e-9, "t_c nao e a raiz da reta do plano anterior"
+        exF.append(dict(tc=tc, rho=tc * VA * r["n"] / r["L"], razao=tc / r["t_cert"], S=S, cert=r["t_cert"]))
+    confere("nlN", len(RF), 0)
+    confere("nlExact", len(exF), 0)
+    if exF:
+        confere("nlTcMed", st.median(x["tc"] for x in exF), 3)
+        confere("nlTcMin", min(x["tc"] for x in exF), 3)
+        confere("nlTcMax", max(x["tc"] for x in exF), 3)
+        confere("nlRhoMed", st.median(x["rho"] for x in exF))
+        confere("nlRhoMin", min(x["rho"] for x in exF))
+        confere("nlRhoMax", max(x["rho"] for x in exF))
+        confere("nlRatioMed", st.median(x["razao"] for x in exF))
+        confere("nlRatioMax", max(x["razao"] for x in exF))
+        confere("nlCertMed", st.median(x["cert"] for x in exF))
+        confere("nlSZMed", st.median(x["S"]["0"] for x in exF))
+        confere("nlSZMax", max(x["S"]["0"] for x in exF))
+        confere("nlSVMed", st.median(x["S"]["0.03"] for x in exF if "0.03" in x["S"]))
+        confere("nlSANil", sum(1 for x in exF if "0.25" in x["S"] and x["S"]["0.25"] <= 1e-5), 0)
+print("E3. escala de fibra (fibra_aninhados_resultados)")
+G1 = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(AQUI, "fibra_aninhados_resultados", "g1_*.json")))]
+G2 = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(AQUI, "fibra_aninhados_resultados", "g2_*.json")))]
+
+
+def eco_fibra(r, tpp, vc_mmin):
+    vc, va = vc_mmin * 1000.0 / 60.0, 140.0 * 1000.0 / 60.0
+    tl = float(tpp) * VA / va
+    m = r["seg"][tpp]
+    Ts = r["L_segmento"] / vc + m["ar"] / va + tl * m["n_perf"]
+    AP = (r["fo_contorno_media"] - r["L_pecas"] / VC) * VA
+    Tc = r["L_pecas"] / vc + AP / va + tl * min(r["n_contornos"], m["n_perf"])
+    return 100 * (Tc - Ts) / Tc, 100 * (AP / va) / Tc
+
+
+if G1 and all(all(k in r["seg"] and r["seg"][k] for k in ("0", "0.06", "0.25", "1")) for r in G1):
+    confere("fbN", len(G1), 0)
+    for vc_m, tag in ((15, ""), (30, "Th")):
+        for tpp, s in (("0", "Z"), ("0.06", "S"), ("0.25", "A"), ("1", "C")):
+            e = [eco_fibra(r, tpp, vc_m)[0] for r in G1]
+            confere(f"fbMed{tag}{s}", st.median(e), 3)
+            confere(f"fbMax{tag}{s}", max(e), 3)
+    confere("fbAirS", st.median(eco_fibra(r, "0.06", 15)[1] for r in G1))
+if G2 and all(all(k in r["seg"] and r["seg"][k] for k in ("0", "0.06", "0.25", "1")) for r in G2):
+    confere("fbNdense", len(G2), 0)
+    for tpp, s in (("0", "Z"), ("0.06", "S"), ("0.25", "A"), ("1", "C")):
+        e = [eco_fibra(r, tpp, 15)[0] for r in G2]
+        confere(f"fbDenMed{s}", st.median(e), 3)
+        confere(f"fbDenMax{s}", max(e), 3)
+    confere("fbDenAirS", st.median(eco_fibra(r, "0.06", 15)[1] for r in G2))
+
+print("E4. PCGLNS de arcos contra o exato (heuristica_vs_exato_resultados)")
+RH = [json.load(open(f)) for f in sorted(glob.glob(os.path.join(AQUI, "heuristica_vs_exato_resultados", "*.json")))]
+exc, lac, cap = [], [], []
+for r in RH:
+    for t, c in r["casos"].items():
+        h = c["h"]
+        if not h:
+            continue
+        nc_h, nc_x = h["fo"] - r["L_segmento"] / VC, c["M"] - r["L_segmento"] / VC
+        exc.append(100 * (nc_h - nc_x) / nc_x)
+        lac.append(100 * (h["fo"] - c["M"]) / c["T_P"])
+        S = c["T_P"] - c["M"]
+        if S > 1e-3 * c["T_P"]:
+            cap.append((c["T_P"] - h["fo"]) / S)
+if exc:
+    confere("hvLay", len(RH), 0)
+    confere("hvN", len(exc), 0)
+    confere("hvMed", st.median(exc), 2)
+    confere("hvMax", max(exc), 2)
+    confere("hvWfive", sum(1 for x in exc if x <= 5.0), 0)
+    confere("hvOpt", sum(1 for x in exc if x <= 1e-6), 0)
+    confere("hvGapMed", st.median(lac), 3)
+    confere("hvGapMax", max(lac), 3)
+    if cap:
+        confere("hvCapN", len(cap), 0)
+        confere("hvCapMed", st.median(cap), 2)
+
 print("\nRESULTADO: " + ("tudo coincide com o manuscrito" if not FALHAS else "DIFERENCAS em " + ", ".join(FALHAS)))
 sys.exit(0 if not FALHAS else 1)

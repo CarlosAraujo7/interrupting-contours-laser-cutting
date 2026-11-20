@@ -1,0 +1,54 @@
+{
+ "instancia": "Category_-_Combined_parts__100-250_clusters__3x_-_contour_nesting__ck3x_1__ck3x_1",
+ "fonte": "v2",
+ "n_contornos": 50,
+ "n_pares_pi": 49,
+ "L_pecas": 58783.99965286255,
+ "L_segmento": 58783.99965294,
+ "L_segmento_novo": 58783.99965294,
+ "fo_contorno_media": 3541.453979423525,
+ "seg": {
+  "0": {
+   "rodada": 1,
+   "fo": 3533.308479556801,
+   "ar": 2507.4001521600003,
+   "n_perf": 84,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 23
+  },
+  "1": {
+   "rodada": 1,
+   "fo": 3592.6424782227,
+   "ar": 5840.999618520001,
+   "n_perf": 51,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 25
+  },
+  "0.06": {
+   "rodada": 1,
+   "fo": 3537.3344781348223,
+   "ar": 2269.799583370001,
+   "n_perf": 77,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 26
+  },
+  "0.25": {
+   "rodada": 1,
+   "fo": 3550.8744786118245,
+   "ar": 2333.7997741700005,
+   "n_perf": 72,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 2
+  }
+ },
+ "orcamento_s": 312.07201170921326,
+ "tempo_total_s": 314.2722773551941
+}

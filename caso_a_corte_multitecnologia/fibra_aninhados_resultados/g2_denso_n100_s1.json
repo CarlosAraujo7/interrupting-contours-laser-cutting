@@ -1,0 +1,54 @@
+{
+ "instancia": "denso_n100_s1",
+ "fonte": "denso",
+ "n_contornos": 100,
+ "n_pares_pi": 0,
+ "L_pecas": 2678.450033697751,
+ "L_segmento": 2678.4500340000004,
+ "fo_contorno_media": 163.5188322962377,
+ "n_sementes_contorno": 10,
+ "seg": {
+  "0": {
+   "rodada": 1,
+   "fo": 164.0100450390251,
+   "ar": 1321.21719961,
+   "n_perf": 121,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0
+  },
+  "0.06": {
+   "rodada": 1,
+   "fo": 170.08400183664997,
+   "ar": 1350.79991866,
+   "n_perf": 100,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0
+  },
+  "0.25": {
+   "rodada": 0,
+   "fo": 189.27844752722498,
+   "ar": 1428.57819489,
+   "n_perf": 100,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0
+  },
+  "1": {
+   "rodada": 1,
+   "fo": 264.4630269825001,
+   "ar": 1502.4099769999998,
+   "n_perf": 100,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0
+  }
+ },
+ "orcamento_s": 1031.174082517624,
+ "tempo_total_s": 1428.6587145328522
+}
