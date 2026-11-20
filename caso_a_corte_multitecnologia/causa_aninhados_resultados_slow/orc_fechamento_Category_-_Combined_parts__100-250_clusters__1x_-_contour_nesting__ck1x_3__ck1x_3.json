@@ -1,0 +1,45 @@
+{
+ "instancia": "Category_-_Combined_parts__100-250_clusters__1x_-_contour_nesting__ck1x_3__ck1x_3",
+ "semantica": "fechamento",
+ "sementes": [
+  0,
+  1
+ ],
+ "tempo_rodada_s": 600,
+ "tempo_original_s": 47,
+ "E": 111,
+ "melhor": {
+  "semente": 0,
+  "fo": 1535.4675811104,
+  "ar": 4079.1823615999997,
+  "n_perf": 28,
+  "contiguo": true,
+  "geo_ok": true,
+  "viol_fechamento": 0,
+  "viol_estrita": 26
+ },
+ "historico": [
+  {
+   "semente": 0,
+   "fo": 1535.4675811104,
+   "ar": 4079.1823615999997,
+   "n_perf": 28,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 26
+  },
+  {
+   "semente": 1,
+   "fo": 1535.4675811104003,
+   "ar": 4079.1823615999997,
+   "n_perf": 28,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 26
+  }
+ ],
+ "tempo_total_s": 213.72889232635498,
+ "modo": "slow"
+}

@@ -1,0 +1,32 @@
+{
+ "instancia": "art_15_regular_sep",
+ "n": 13,
+ "L": 1550.07650846,
+ "P0": 94.56735816198028,
+ "t_cert": 0.873123596180277,
+ "hi_grade": 0.25,
+ "partida": [
+  0.03,
+  24,
+  93.72265985985
+ ],
+ "limite_s": 5400.0,
+ "status": "sem_prova",
+ "t_c": null,
+ "trilha": [
+  {
+   "t": 0.03,
+   "R": 24,
+   "c": 93.72265985985,
+   "origem": "partida"
+  },
+  {
+   "t": 0.07679075473911662,
+   "origem": "novo",
+   "status": "sem_prova",
+   "motivo": "status 1",
+   "tempo_s": 5400.056632518768
+  }
+ ],
+ "tempo_total_s": 5400.057631731033
+}

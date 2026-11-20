@@ -767,7 +767,10 @@ def macros_repositorio_publico():
     import verificar_repositorio_publico_artigo_irmao as vp
     R = vp.resumo()
     MACROS.update({"pubInst": str(R["n_instancias"]), "pubFoIguais": str(R["fo_iguais"]), "pubFoDif": str(R["fo_diferentes"]), "pubFoDifPack": str(R["diferentes_pack"]),
-                   "pubFoDifMax": f"{R['dif_rel_max_pct']:.2f}" + r"\%"})
+                   "pubFoDifMax": f"{R['dif_rel_max_pct']:.2f}" + r"\%",
+                   # comparacao com o CSV FINAL por instancia do artigo irmao (LCPP-main, somente leitura; constantes reconferidas por `vp.conferir_contra_final()` quando LCPP-main existe)
+                   "cmpConsEq": str(R["final_cons_iguais"]), "cmpForteEq": str(R["final_forte_iguais"]), "cmpForteHi": str(R["final_forte_maiores"]),
+                   "cmpForteMax": f"{R['final_forte_max_pct']:.2f}" + r"\%", "cmpForteMean": f"{R['final_forte_media_pct']:.2f}" + r"\%", "cmpPubFinalEq": str(R["final_dif_iguais_nosso"])})
 
 
 def tabela_velocidades():
@@ -936,7 +939,14 @@ def macros_newton():
         return
     R = [json.load(open(f)) for f in fs]
     ex = [r for r in R if r["status"] == "exato"]
-    MACROS.update({"nwN": str(len(R)), "nwExact": str(len(ex)), "nwNoProof": str(sum(1 for r in R if r["status"] == "sem_prova"))})
+    nsp = sum(1 for r in R if r["status"] == "sem_prova")
+    sem_prova = ("" if nsp == 0 else ("In the other layout a programme did not finish" if nsp == 1 else f"In the other {nsp} layouts a programme did not finish") + " even with the longest limit, so that only the interval remains.")
+    lims = sorted({r["limite_s"] for r in R})                                                      # os limites tentados (1800 s para todos; repeticoes com limites maiores nos que nao fecharam: docs/52 D4, docs/55 parte D)
+    lim_sent = f"a limit of {lims[0]:.0f}" + r"\,s per programme"
+    for i, L_ in enumerate(lims[1:]):
+        n_i = sum(1 for r in R if r["limite_s"] >= L_)                                             # layouts repetidos com o limite L_ (alcancaram o anterior)
+        lim_sent += (", extended to " if i == 0 else " and to ") + f"{L_:.0f}" + r"\,s in the " + str(n_i) + (" layouts that reached it" if i == 0 else " that reached that")
+    MACROS.update({"nwN": str(len(R)), "nwExact": str(len(ex)), "nwNoProof": str(nsp), "nwNoProofSent": sem_prova, "nwLimSent": lim_sent})
     if not ex:
         return
     novos = [sum(1 for x in r["trilha"] if "M" in x) for r in ex]
@@ -945,11 +955,33 @@ def macros_newton():
     razao = [r["t_c"] / r["t_cert"] for r in ex]
     MACROS.update({"nwSolves": str(sum(novos)), "nwSolvesMax": str(max(novos)),
                    "nwTcMed": f"{np.median(tc):.3f}", "nwTcMin": f"{min(tc):.3f}", "nwTcMax": f"{max(tc):.3f}",
-                   "nwRhoMed": f"{np.median(rho):.2f}", "nwRhoMax": f"{max(rho):.2f}", "nwRatioMed": f"{np.median(razao):.2f}", "nwRatioMax": f"{max(razao):.2f}",
+                   "nwRhoMed": f"{np.median(rho):.2f}", "nwRhoMin": f"{min(rho):.2f}", "nwRhoMax": f"{max(rho):.2f}", "nwRatioMed": f"{np.median(razao):.2f}", "nwRatioMax": f"{max(razao):.2f}",
                    "nwLimA": f"{min(r['limite_s'] for r in R):.0f}", "nwLimB": f"{max(r['limite_s'] for r in R):.0f}",
                    "nwRetry": str(sum(1 for r in R if r["limite_s"] == max(q["limite_s"] for q in R))) if len({q["limite_s"] for q in R}) > 1 else "0",     # layouts repetidos com o limite maior (docs/52, D4)
                    "nwHfive": "supported" if (0.04 <= np.median(tc) <= 0.15 and max(rho) <= 1) else "not supported",           # previsoes empiricas de docs/52 (H-N5, H-N6)
                    "nwHsix": "supported" if np.median(razao) <= 0.5 else "not supported"})
+
+
+def tabela_newton():
+    """Tabela por layout do ponto de equilibrio exato (Proposicao 3; `caso_a_corte_multitecnologia/newton_resultados/`, pre-especificado em docs/52): so le os resultados guardados (um JSON por layout)."""
+    fs = sorted(glob.glob(os.path.join(A, "newton_resultados", "*.json")))
+    if not fs:
+        return
+    R = [json.load(open(f)) for f in fs]
+    Tx = [r"\begin{table}[t]", r"\centering\footnotesize",
+          r"\caption{Exact break-even restart cost of each layout, by the iteration of Proposition~\ref{prop:curve} (pre-specified; stored values; the mixed-integer programme is the exact solver). $n$: contours; $R_0$: runs of the stored plan of largest root, where the iteration starts; zero on the grid: first grid point at which the exact saving is proved nil; MILPs: exact programmes solved by the iteration; $t_c$: exact break-even restart cost; $t_{\mathrm{cert}}$: certificate of Proposition~\ref{prop:cert}; $\rho_c=t_c v_a n/L$: break-even in mean contour perimeters." + (r" A dash: no programme finished within the longest limit, so that only the interval from the grid remains." if any(r_["status"] != "exato" for r_ in R) else "") + "}",
+          r"\label{tab:n1_newton}", r"\begin{tabular}{lrrrrrrrr}", r"\toprule",
+          r"Layout & $n$ & $R_0$ & \shortstack{Zero on\\grid (s)} & MILPs & $t_c$ (s) & $t_{\mathrm{cert}}$ (s) & $t_c/t_{\mathrm{cert}}$ & $\rho_c$ \\", r"\midrule"]
+    for r in R:
+        nome = r["instancia"].replace("_", r"\_")
+        novos = sum(1 for x in r["trilha"] if "M" in x)
+        if r["status"] == "exato":
+            tc, razao, rho = f"{r['t_c']:.3f}", f"{r['t_c'] / r['t_cert']:.2f}", f"{r['t_c'] * VA * r['n'] / r['L']:.2f}"
+        else:
+            tc = razao = rho = "--"
+        Tx.append("\\texttt{" + nome + "} & " + f"{r['n']} & {r['trilha'][0]['R']} & {r['hi_grade']:g} & {novos} & {tc} & {r['t_cert']:.3f} & {razao} & {rho} " + r"\\")
+    Tx += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    open(os.path.join(TAB, "n1_newton.tex"), "w", encoding="utf-8").write("\n".join(Tx) + "\n")
 
 
 def macros_causa():
@@ -975,6 +1007,9 @@ def macros_causa():
     if ok:
         MACROS.update({"cnStrLo": fmt(min(b for _, b in ok), 2), "cnStrHi": fmt(max(b for _, b in ok), 2, sinal=False), "cnHalf": str(sum(1 for a, b in ok if b < 0.5 * a)),
                        "cnNil": str(sum(1 for _, b in ok if abs(b) <= 0.01))})                  # economia estrita nula: |S| <= 0,01% do tempo total
+        resto = [100.0 * (1.0 - b / a) for a, b in ok if b >= 0.5 * a]                            # os layouts em que a estrita NAO derrubou a economia a menos da metade (previsao P-C1 de docs/52)
+        if resto:
+            MACROS.update({"cnRest": str(len(resto)), "cnRedLo": f"{min(resto):.0f}" + r"\%", "cnRedHi": f"{max(resto):.0f}" + r"\%"})
     if gaps:
         gmax = max(abs(g) for g in gaps)
         MACROS["cnDpMax"] = ("0.001" if gmax < 1e-3 else f"{gmax:.3f}") + r"\%"                  # cota superior arredondada para cima (0,001% se menor)
@@ -987,6 +1022,67 @@ def macros_causa():
     if all(x is not None for x in rc + rs):
         MACROS.update({"cnRepClosLo": fmt(min(rc), 2, sinal=False), "cnRepClosHi": fmt(max(rc), 2, sinal=False), "cnRepStrLo": fmt(min(rs), 2), "cnRepStrHi": fmt(max(rs), 2),
                        "cnPTres": str(sum(1 for a, b in zip(c, rc) if b >= 0.75 * a)), "cnPQuatro": str(sum(1 for a, b in zip(s, rs) if abs(a - b) <= 0.05))})
+
+
+def tabela_orcamento():
+    """Orcamento e esforco de busca do PCGLNS no teste da causa nos 4 layouts aninhados (`caso_a_corte_multitecnologia/causa_aninhados_orcamento.py` e `causa_aninhados_slow.py`; pre-especificado em docs/55 e
+    docs/55_desvios.md; so le os resultados guardados): economia conservadora a t = 1 s com o orcamento original, com o teto de 600 s no modo default e no modo slow; macros e tabela."""
+    import causa_aninhados_v2 as cn
+    SL = os.path.join(A, "causa_aninhados_resultados_slow")
+    if not (os.path.isdir(cn.OUT) and os.path.isdir(SL)):
+        return
+    V2 = cn.v2_dados()
+    F = []
+    for nome in cn.selecionados():
+        r = V2[nome]
+        orig = {"fechamento": r["seg_t1"]["melhor"], "estrita": json.load(open(os.path.join(cn.OUT, f"est_{nome}.json")))["melhor"]}
+        for sem in ("fechamento", "estrita"):
+            fc, fs = os.path.join(cn.OUT, f"orc_{sem}_{nome}.json"), os.path.join(SL, f"orc_{sem}_{nome}.json")
+            if not (os.path.exists(fc) and os.path.exists(fs)):
+                return                                                           # incompleto: nem macros nem tabela
+            rc, rs = json.load(open(fc)), json.load(open(fs))
+            mo, mc, ms = orig[sem], rc["melhor"], rs["melhor"]
+            if not (mo and mc and ms):
+                return
+            F.append({"nome": nome, "curto": nome.split("__")[-1], "n": r["n_contornos"], "E": rc["E"], "sem": sem, "t_orig": rc["tempo_original_s"], "t_cap": rc["tempo_total_s"], "t_slow": rs["tempo_total_s"],
+                      "s_o": cn.economia(r, mo), "s_c": cn.economia(r, mc), "s_s": cn.economia(r, ms),
+                      "d_c": 100.0 * (mc["fo"] / mo["fo"] - 1.0), "d_s": 100.0 * (ms["fo"] / mo["fo"] - 1.0)})
+    Tx = [r"\begin{table}[t]", r"\centering\footnotesize\setlength{\tabcolsep}{3.5pt}",
+          r"\caption{PCGLNS budget and search effort in the test of the cause on the four nested layouts (pre-specified; protocol and deviations in the repository). Saving of the segment-level route over the contour-level reference at $t=1$\,s (conservative, in \% of the total time), under the closing and the strict precedence. Original: the budget of the main experiment ($\min(120,\,20+E/4)$\,s per round, default mode of the solver); cap 600\,s: default mode with a cap of 600\,s per round; slow: slow mode of the solver (more iterations and trials), same cap. $\Delta$FO: change of the best total time against the original, in \%. Seeds 0 and 1, two rounds, in every case. Times: both rounds, in seconds. $n$: contours; $E$: arcs.}",
+          r"\label{tab:n1_orcamento}", r"\begin{tabular}{llrrrrrrrrr}", r"\toprule",
+          r"Layout & Precedence & $n$ & $E$ & Original & Cap 600\,s & Slow & $\Delta$FO slow & Time original & Time cap & Time slow \\", r"\midrule"]
+    for x in F:
+        Tx.append(f"\\texttt{{{x['curto'].replace('_', chr(92) + '_')}}} & {'closing' if x['sem'] == 'fechamento' else 'strict'} & {x['n']} & {x['E']} & {fmt_sem_pct(x['s_o'], 3)} & {fmt_sem_pct(x['s_c'], 3)} & {fmt_sem_pct(x['s_s'], 3)} & {fmt_sem_pct(x['d_s'], 3)} & $\\le{2 * x['t_orig']}$ & {x['t_cap']:.0f} & {x['t_slow']:.0f} " + r"\\")
+    Tx += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    open(os.path.join(TAB, "n1_orcamento.tex"), "w", encoding="utf-8").write("\n".join(Tx) + "\n")
+    C, S = [x for x in F if x["sem"] == "fechamento"], [x for x in F if x["sem"] == "estrita"]
+    rng = lambda L_, k, casas=2: (fmt(min(y[k] for y in L_), casas, sinal=False), fmt(max(y[k] for y in L_), casas, sinal=False))
+    n_lay = len(C)
+    dsav = lambda L_, a, b: max(abs(y[a] - y[b]) for y in L_)
+    ligado = sum(1 for x in F if x["t_cap"] > 2 * x["t_orig"] + 15)                # o teto original limitava a execucao (a nova levou mais que as duas rodadas do orcamento original)
+    p1a, p1b = sum(1 for x in C if abs(x["s_c"] - x["s_o"]) <= 0.05), sum(1 for x in S if abs(x["s_c"] - x["s_o"]) <= 0.05)
+    p3 = sum(1 for x in S if x["s_c"] <= 0.10)
+    q1, q2 = sum(1 for x in C if abs(x["s_s"] - x["s_o"]) <= 0.05), sum(1 for x in S if abs(x["s_s"] - x["s_o"]) <= 0.05)
+    q3 = sum(1 for x in S if x["s_s"] <= 0.10)
+    sup = lambda ok: "supported" if ok else "not supported"
+    est_c = all(c_["s_c"] >= s_["s_c"] - 1e-9 for c_, s_ in zip(C, S))                          # P-O2: com o teto de 600 s, fechamento >= estrita em todos os layouts
+    est_s = all(c_["s_s"] >= s_["s_s"] - 1e-9 for c_, s_ in zip(C, S))                          # P-S4: idem no modo slow
+    conv_c = min(sum(1 for x in C if abs(x["d_c"]) <= 0.01), sum(1 for x in S if abs(x["d_c"]) <= 0.01)) >= 3     # P-O4: o melhor FO muda <= 0,01% em >= 3 de 4, por semantica
+    diag_s = min(sum(1 for x in C if x["d_s"] <= 0.01), sum(1 for x in S if x["d_s"] <= 0.01)) >= 3               # P-S5: o modo slow nao e pior que o original em mais de 0,01% em >= 3 de 4, por semantica
+    MACROS.update({"bgOStr": sup(est_c), "bgOConv": sup(conv_c), "bgSStr": sup(est_s), "bgSDiag": sup(diag_s)})
+    MACROS.update({"bgN": str(n_lay), "bgTasks": str(len(F)), "bgBound": str(ligado), "bgFree": str(len(F) - ligado),
+                   "bgRatioLo": f"{600 / max(x['t_orig'] for x in F):.0f}", "bgRatioHi": f"{600 / min(x['t_orig'] for x in F):.0f}",
+                   "bgClosOrigLo": rng(C, "s_o")[0], "bgClosOrigHi": rng(C, "s_o")[1], "bgClosCapLo": rng(C, "s_c")[0], "bgClosCapHi": rng(C, "s_c")[1], "bgClosSlowLo": rng(C, "s_s")[0], "bgClosSlowHi": rng(C, "s_s")[1],
+                   "bgStrOrigLo": fmt(min(x["s_o"] for x in S), 2), "bgStrOrigHi": fmt(max(x["s_o"] for x in S), 2, sinal=False), "bgStrCapLo": fmt(min(x["s_c"] for x in S), 2), "bgStrCapHi": fmt(max(x["s_c"] for x in S), 2, sinal=False),
+                   "bgStrSlowLo": fmt(min(x["s_s"] for x in S), 2), "bgStrSlowHi": fmt(max(x["s_s"] for x in S), 2, sinal=False),
+                   "bgDSavCap": f"{max(dsav(C, 's_c', 's_o'), dsav(S, 's_c', 's_o')):.3f}", "bgDSavSlow": f"{max(dsav(C, 's_s', 's_o'), dsav(S, 's_s', 's_o')):.3f}",
+                   "bgDSavMax": f"{max(dsav(C, 's_c', 's_o'), dsav(S, 's_c', 's_o'), dsav(C, 's_s', 's_o'), dsav(S, 's_s', 's_o')):.3f}",
+                   "bgDFoCap": f"{max(abs(x['d_c']) for x in F):.3f}" + r"\%", "bgDFoSlow": f"{max(abs(x['d_s']) for x in F):.3f}" + r"\%",
+                   "bgDFoSlowUp": f"{max(x['d_s'] for x in F):.3f}" + r"\%",                                  # a maior piora do modo slow sobre o original (se > 0)
+                   "bgOa": str(p1a), "bgOb": str(p1b), "bgOc": str(p3), "bgSa": str(q1), "bgSb": str(q2), "bgSc": str(q3),
+                   "bgOkAll": sup(min(p1a, p1b, p3, q1, q2, q3) >= 3)})
+    assert MACROS["bgOkAll"] == "supported" and all(MACROS[k] == "supported" for k in ("bgOStr", "bgOConv", "bgSStr", "bgSDiag")), \
+        "alguma previsao do teste de orcamento (docs/55) nao foi sustentada: reescreva a secao D.4 e a frase da secao 6.7, que dizem 'sustentadas'"      # o texto afirma que todas foram sustentadas
 
 
 def tabela_tamanho(L):
@@ -1099,7 +1195,9 @@ def main():
     macros_proposicao3()
     macros_layouts_reais()
     macros_newton()
+    tabela_newton()
     macros_causa()
+    tabela_orcamento()
     tabela_tamanho(L)
     macros_familias(L)
     macros_repositorio_publico()

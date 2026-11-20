@@ -1,0 +1,44 @@
+{
+ "instancia": "Category_-_Combined_parts__100-250_clusters__1x_-_contour_nesting__ck1x_3__ck1x_3",
+ "semantica": "estrita",
+ "sementes": [
+  0,
+  1
+ ],
+ "tempo_rodada_s": 600,
+ "tempo_original_s": 47,
+ "E": 111,
+ "melhor": {
+  "semente": 0,
+  "fo": 1535.63104676525,
+  "ar": 4944.56862354,
+  "n_perf": 26,
+  "contiguo": true,
+  "geo_ok": true,
+  "viol_fechamento": 0,
+  "viol_estrita": 0
+ },
+ "historico": [
+  {
+   "semente": 0,
+   "fo": 1535.63104676525,
+   "ar": 4944.56862354,
+   "n_perf": 26,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0
+  },
+  {
+   "semente": 1,
+   "fo": 1535.63104676525,
+   "ar": 4944.56862354,
+   "n_perf": 26,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 0
+  }
+ ],
+ "tempo_total_s": 49.79929447174072
+}

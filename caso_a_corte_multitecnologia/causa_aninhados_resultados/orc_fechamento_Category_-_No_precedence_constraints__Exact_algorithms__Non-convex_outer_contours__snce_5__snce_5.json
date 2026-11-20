@@ -1,0 +1,44 @@
+{
+ "instancia": "Category_-_No_precedence_constraints__Exact_algorithms__Non-convex_outer_contours__snce_5__snce_5",
+ "semantica": "fechamento",
+ "sementes": [
+  0,
+  1
+ ],
+ "tempo_rodada_s": 600,
+ "tempo_original_s": 62,
+ "E": 170,
+ "melhor": {
+  "semente": 0,
+  "fo": 1088.7745217526503,
+  "ar": 1557.7999801799997,
+  "n_perf": 14,
+  "contiguo": true,
+  "geo_ok": true,
+  "viol_fechamento": 0,
+  "viol_estrita": 19
+ },
+ "historico": [
+  {
+   "semente": 0,
+   "fo": 1088.7745217526503,
+   "ar": 1557.7999801799997,
+   "n_perf": 14,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 19
+  },
+  {
+   "semente": 1,
+   "fo": 1088.7855217755011,
+   "ar": 1962.19998932,
+   "n_perf": 13,
+   "contiguo": true,
+   "geo_ok": true,
+   "viol_fechamento": 0,
+   "viol_estrita": 19
+  }
+ ],
+ "tempo_total_s": 93.04960942268372
+}
